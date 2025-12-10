@@ -108,25 +108,40 @@ private fun BottomNavBar(
             NavigationBarItem(
                 selected = selectedTab == 0,
                 onClick = { onTabSelected(0) },
-                icon = { Icon(Icons.Default.Home, contentDescription = "Beranda") },
-                label = { Text("Beranda") }
+                icon = {
+                    Image(
+                        painterResource(id = R.drawable.menu),
+                        contentDescription = "Menu",
+                        modifier = Modifier.size(24.dp))},
+                label = { Text("Menu") }
             )
             NavigationBarItem(
                 selected = selectedTab == 1,
                 onClick = { onTabSelected(1) },
-                icon = { Icon(Icons.Default.DateRange, contentDescription = "Kegiatan") },
-                label = { Text("Kegiatan") }
+                icon = {
+                    Image(
+                        painterResource(R.drawable.daftar),
+                        contentDescription = "Daftar",
+                        modifier = Modifier.size(24.dp)) },
+                label = { Text("Daftar") }
             )
             NavigationBarItem(
                 selected = selectedTab == 2,
                 onClick = { onTabSelected(2) },
-                icon = { Icon(Icons.Default.DateRange, contentDescription = "UMKM") },
-                label = { Text("UMKM") }
+                icon = { Image(
+                    painterResource(R.drawable.tanggal),
+                    contentDescription = "Tanggal",
+                    modifier = Modifier.size(24.dp)) },
+                label = { Text("Tanggal") }
             )
             NavigationBarItem(
                 selected = selectedTab == 3,
                 onClick = { onTabSelected(3) },
-                icon = { Icon(Icons.Default.Person, contentDescription = "Profil") },
+                icon = {
+                    Image(
+                        painterResource(R.drawable.profil),
+                        contentDescription = "Profil",
+                        modifier = Modifier.size(24.dp)) },
                 label = { Text("Profil") }
             )
         }
