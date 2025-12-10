@@ -34,7 +34,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SplashScreen(
-    navController: NavController
+    navController: NavController,
+    isLoggedIn: Boolean
 ) {
     // Animasi: alpha (fade), offsetY (geser), scale (zoom)
     val alpha = remember { Animatable(0f) }
@@ -49,7 +50,7 @@ fun SplashScreen(
             alpha.animateTo(
                 targetValue = 1f,
                 animationSpec = tween(
-                    durationMillis = 1000,
+                    durationMillis = 0,
                     easing = FastOutSlowInEasing
                 )
             )
@@ -75,28 +76,14 @@ fun SplashScreen(
             )
         }
 
-        // Tahan sebentar ketika sudah tampil
-        delay(1200)
+        // Tahan sebentar biar splash-nya kebaca
+        delay(4000)
 
-        // ANIMASI KELUAR (OUT)
-        alpha.animateTo(
-            targetValue = 0f,
-            animationSpec = tween(
-                durationMillis = 1000,
-                easing = FastOutSlowInEasing
-            )
-        )
-        scale.animateTo(
-            targetValue = 0.8f,
-            animationSpec = tween(
-                durationMillis = 1000,
-                easing = FastOutSlowInEasing
-            )
-        )
+        // Tentukan ke mana setelah splash
+        val nextRoute = if (isLoggedIn) "home" else "login"
 
-        // Setelah animasi keluar selesai → pindah ke Home
-        navController.navigate("home") {
-            popUpTo("splash") { inclusive = true }
+        navController.navigate(nextRoute) {
+            popUpTo("splash") { inclusive = true } // hapus splash dari backstack
         }
     }
 
@@ -125,15 +112,14 @@ fun SplashScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Nama app
+            // Tagline
             androidx.compose.material3.Text(
                 text = "“Gerak Nyata untuk Ekonomi Rakyat”",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFFFFFFFF),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .align (Alignment.CenterHorizontally),
+                    .fillMaxWidth(),
                 textAlign = TextAlign.Center
             )
         }
@@ -144,7 +130,7 @@ fun SplashScreen(
 @Composable
 fun SplashScreenPreview() {
     SplashScreen(
-        navController = rememberNavController()
+        navController = rememberNavController(),
+        isLoggedIn = false
     )
 }
-

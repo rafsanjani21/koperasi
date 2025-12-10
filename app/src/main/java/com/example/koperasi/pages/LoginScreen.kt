@@ -6,6 +6,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,17 +42,28 @@ fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp)
         ) {
             //HEADER
-            Text(
-                "Log In",
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color(0xFFF68E1E),
-                fontWeight = FontWeight.Bold,
-                fontSize = 26.sp,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        top = 50.dp,
+                        start = 24.dp,
+                        end = 24.dp,
+                        bottom = 24.dp
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                // Title di tengah
+                Text(
+                    text = "Log In",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Color(0xFFF68E1E),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 26.sp,
+                )
+            }
             Spacer(modifier = Modifier.weight(1f))
 
             //KONTEN TENGAH
@@ -99,7 +112,7 @@ fun LoginScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Don’t have an account? ",
+                        text = "Don’t have an account?",
                         color = Color.Black
                     )
                     Text(
