@@ -160,7 +160,7 @@ fun NavigationBottomBar(
 //    val navController = rememberNavController()
 
     // For testing only
-    var selectedItem by remember { mutableIntStateOf(0) }
+    var selectedItem by remember { mutableIntStateOf(3) }
 
     NavigationBar(
         modifier = modifier

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -57,7 +58,7 @@ fun UserProfileDataScreen(
                     title = {
                         Text(
                             text = "Data User",
-                            fontSize = 24.sp,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFFF68E1E)
                         )
@@ -67,7 +68,7 @@ fun UserProfileDataScreen(
                     imageVector = Icons.AutoMirrored.Default.KeyboardArrowLeft,
                     contentDescription = "Back",
                     modifier = modifier
-                        .size(40.dp)
+                        .size(32.dp)
                         .align(Alignment.CenterStart)
                         .clickable(onClick = { /* Handle back action */ })
                 )
@@ -80,7 +81,7 @@ fun UserProfileDataScreen(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
-                modifier = modifier.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)
+                modifier = modifier.verticalScroll(rememberScrollState()).padding(bottom = 12.dp)
             ) {
                 UserProfilePrivateInfo(modifier = modifier)
                 UserProfileAddressInfo(modifier = modifier)
@@ -94,11 +95,12 @@ fun UserProfileDataScreen(
                 ) {
                     Text(
                         text = "Log Out",
-                        fontSize = 18.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                 }
+                Spacer(modifier = modifier.height(96.dp))
             }
         }
     }
@@ -122,7 +124,7 @@ fun UserProfilePrivateInfo(
     ) {
         Text(
             text = "Informasi Pribadi",
-            fontSize = 22.sp,
+            fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF171717)
         )
@@ -136,13 +138,13 @@ fun UserProfilePrivateInfo(
             ) {
                 Text(
                     text = "Jenis Kelamin",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
                     color = Color(0xFF4D4D4D)
                 )
                 Text(
                     text = "Laki-laki",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF171717)
                 )
@@ -153,13 +155,13 @@ fun UserProfilePrivateInfo(
             ) {
                 Text(
                     text = "NIK",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
                     color = Color(0xFF4D4D4D)
                 )
                 Text(
                     text = "3326160608070197",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF171717)
                 )
@@ -170,13 +172,13 @@ fun UserProfilePrivateInfo(
             ) {
                 Text(
                     text = "Nomor Telepon",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
                     color = Color(0xFF4D4D4D)
                 )
                 Text(
                     text = "+62 812 4567 890",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF171717)
                 )
@@ -187,13 +189,13 @@ fun UserProfilePrivateInfo(
             ) {
                 Text(
                     text = "Tanggal Lahir",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
                     color = Color(0xFF4D4D4D)
                 )
                 Text(
                     text = "30 Februari 1990",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF171717)
                 )
@@ -204,13 +206,13 @@ fun UserProfilePrivateInfo(
             ) {
                 Text(
                     text = "Pekerjaan",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
                     color = Color(0xFF4D4D4D)
                 )
                 Text(
                     text = "Peternak Lele",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF171717)
                 )
@@ -221,13 +223,13 @@ fun UserProfilePrivateInfo(
             ) {
                 Text(
                     text = "Pendidikan",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
                     color = Color(0xFF4D4D4D)
                 )
                 Text(
                     text = "S1 - Ilmu Komputer",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF171717)
                 )
@@ -254,7 +256,7 @@ fun UserProfileAddressInfo(
     ) {
         Text(
             text = "Alamat",
-            fontSize = 22.sp,
+            fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF171717)
         )
@@ -264,12 +266,12 @@ fun UserProfileAddressInfo(
         ) {
             Text(
                 text = "Gang Kana Nomor 123 RT 01 RW 02",
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 color = Color(0xFF4D4D4D)
             )
             Text(
                 text = "Rawamangun, KOTA JAKARTA TIMUR",
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 color = Color(0xFF4D4D4D)
             )
         }
@@ -295,12 +297,12 @@ fun UserProfileKTP(
     ) {
         Text(
             text = "KTP",
-            fontSize = 22.sp,
+            fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF171717),
             modifier = modifier.align(Alignment.Start)
         )
-        HorizontalDivider(modifier = modifier.padding(vertical = 6.dp))
+        HorizontalDivider(modifier = modifier.padding(vertical = 6.dp), color = Color(0xFFD6D6D6))
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
