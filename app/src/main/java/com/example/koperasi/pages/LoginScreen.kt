@@ -48,7 +48,7 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        top = 50.dp,
+                        top = 24.dp,
                         start = 24.dp,
                         end = 24.dp,
                         bottom = 24.dp

@@ -51,22 +51,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "1085008448604-23rh41nnuk6mr0oamnkd2ad0reh8264o.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.koperasi",
-            "certificate_hash": "d6588edca66190e720310f71dc1b28d983d48519"
-          }
-        },
-        {
-          "client_id": "1085008448604-lbe1qffq766bo03pjdjma1sv0ijpko4b.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.koperasi",
-            "certificate_hash": "499413269b293dfe04afa8e89cd1ab027545872f"
-          }
-        },
-        {
           "client_id": "1085008448604-0oucanl872c1lkrovvsptl9k9jts7hsd.apps.googleusercontent.com",
           "client_type": 3
         }
