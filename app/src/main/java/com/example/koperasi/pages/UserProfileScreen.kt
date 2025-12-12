@@ -6,11 +6,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.Button
@@ -39,6 +42,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.example.koperasi.R
 import com.example.koperasi.ui.theme.KoperasiTheme
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,59 +75,47 @@ fun UserProfileScreen(
                 )
             }
         },
-        bottomBar = { NavigationBottomBar(modifier = modifier) },
-        modifier = modifier.fillMaxSize()
+         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         Surface(
             modifier = modifier.padding(innerPadding)
         ) {
-            Column (
+            val scrollState = rememberScrollState()
+
+            Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(24.dp),
                 modifier = modifier
                     .fillMaxSize()
+                    .verticalScroll(scrollState)
                     .padding(vertical = 12.dp)
-            ){
+            ) {
                 Image(
                     painter = painterResource(id = R.drawable.placeholder_profile),
                     contentDescription = "Profile",
                     modifier = modifier.size(140.dp)
                 )
+
                 Text(
                     text = "John Doe",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF171717)
                 )
+
                 Column(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    ProfileButton(
-                        buttonName = "Edit Profile",
-                        onClick = {/**/}
-                    )
-                    ProfileButton(
-                        buttonName = "My Activity",
-                        onClick = {/**/}
-                    )
-                    ProfileButton(
-                        buttonName = "Promos",
-                        onClick = {/**/}
-                    )
-                    ProfileButton(
-                        buttonName = "Change Language",
-                        onClick = {/**/}
-                    )
-                    ProfileButton(
-                        buttonName = "Privacy Policy",
-                        onClick = {/**/}
-                    )
-                    ProfileButton(
-                        buttonName = "Terms of Service",
-                        onClick = {/**/}
-                    )
+                    ProfileButton("Edit Profile", onClick = { })
+                    ProfileButton("My Activity", onClick = { })
+                    ProfileButton("Promos", onClick = { })
+                    ProfileButton("Change Language", onClick = { })
+                    ProfileButton("Privacy Policy", onClick = { })
+                    ProfileButton("Terms of Service", onClick = { })
                 }
+
+                Spacer(Modifier.height(24.dp))
             }
         }
     }

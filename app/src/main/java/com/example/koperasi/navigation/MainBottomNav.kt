@@ -22,12 +22,16 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.koperasi.R
 import com.example.koperasi.pages.HomePageContent
+import com.example.koperasi.pages.MerchantProductScreen
+import com.example.koperasi.pages.UserProfileScreen
 
 sealed class BottomNavItem(
     val route: String,
@@ -46,6 +50,7 @@ fun MainBottomNavScreen(
     onOpenMerchant: (String) -> Unit
 ) {
     val navController = rememberNavController()
+
     val items = listOf(
         BottomNavItem.Menu,
         BottomNavItem.Daftar,
@@ -53,14 +58,20 @@ fun MainBottomNavScreen(
         BottomNavItem.Profil
     )
 
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    // ✅ kalau mau bottom bar HILANG di halaman merchant:
+    val showBottomBar = currentRoute?.startsWith("merchant") != true
+
     Scaffold(
         bottomBar = {
-            BottomNavBar(
-                items = items,
-                navController = navController
-            )
+            if (showBottomBar) {
+                BottomNavBar(items = items, navController = navController)
+            }
         }
     ) { innerPadding ->
+
         NavHost(
             navController = navController,
             startDestination = BottomNavItem.Menu.route,
@@ -69,20 +80,30 @@ fun MainBottomNavScreen(
             composable(BottomNavItem.Menu.route) {
                 HomePageContent(
                     onLogoutSuccess = onLogoutSuccess,
-                    onOpenMerchant = onOpenMerchant)
+                    onOpenMerchant = onOpenMerchant
+                )
             }
-            composable(BottomNavItem.Daftar.route) {
-                SimplePage("Halaman Daftar")
-            }
-            composable(BottomNavItem.Tanggal.route) {
-                SimplePage("Halaman Tanggal")
-            }
-            composable(BottomNavItem.Profil.route) {
-                SimplePage("Halaman Profil")
+
+            composable(BottomNavItem.Daftar.route) { SimplePage("Halaman Daftar") }
+            composable(BottomNavItem.Tanggal.route) { SimplePage("Halaman Tanggal") }
+            composable(BottomNavItem.Profil.route) { UserProfileScreen() }
+
+            // ✅ ROUTE MERCHANT (dynamic)
+            composable(
+                route = "merchant/{merchantId}",
+                arguments = listOf(navArgument("merchantId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val merchantId = backStackEntry.arguments?.getString("merchantId").orEmpty()
+
+                MerchantProductScreen(
+                    merchantId = merchantId,
+                    onBackClick = { navController.popBackStack() }
+                )
             }
         }
     }
 }
+
 
 @Composable
 private fun BottomNavBar(

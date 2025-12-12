@@ -1,29 +1,23 @@
 package com.example.koperasi.pages
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,10 +25,21 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,34 +68,41 @@ fun MerchantProductScreen(
 ) {
     val orange = Color(0xFFF68E1E)
 
-    // Tentukan data berdasarkan merchantId
     val merchantData = when (merchantId) {
         "kimo" -> MerchantData(
             title = "Kimo Kafe",
-            bannerRes = R.drawable.kimomenu,      // ganti dengan banner kimo kamu
-            productsCoffee = List(6) {
-                ProductItem("Kopi Kimo", "Rp. 23.000", R.drawable.kopi)
-            },
-            productsFood = List(6) {
-                ProductItem("Snack Kimo", "Rp. 15.000", R.drawable.kopi)
-            }
+            bannerRes = R.drawable.kimomenu,
+            productsCoffee = listOf(
+                ProductItem("Kopi Kimo", "Rp. 23.000", R.drawable.kopi),
+                ProductItem("Latte Kimo", "Rp. 25.000", R.drawable.kopi),
+                ProductItem("Americano", "Rp. 20.000", R.drawable.kopi),
+            ),
+            productsFood = listOf(
+                ProductItem("Snack Kimo", "Rp. 15.000", R.drawable.kopi),
+                ProductItem("Roti Bakar", "Rp. 18.000", R.drawable.kopi),
+            )
         )
+
         "bachra" -> MerchantData(
             title = "Bachra Farm",
             bannerRes = R.drawable.kimomenu,
-            productsCoffee = List(6) {
-                ProductItem("Susu Kambing", "Rp. 30.000", R.drawable.kopi)
-            },
+            productsCoffee = listOf(
+                ProductItem("Susu Kambing", "Rp. 30.000", R.drawable.kopi),
+                ProductItem("Yogurt", "Rp. 22.000", R.drawable.kopi),
+            ),
             productsFood = emptyList()
         )
+
         "burindo" -> MerchantData(
             title = "Burindo",
             bannerRes = R.drawable.kimomenu,
-            productsCoffee = List(6) {
-                ProductItem("Mie Burindo", "Rp. 12.000", R.drawable.kopi)
-            },
+            productsCoffee = listOf(
+                ProductItem("Mie Burindo", "Rp. 12.000", R.drawable.kopi),
+                ProductItem("Bakso", "Rp. 15.000", R.drawable.kopi),
+            ),
             productsFood = emptyList()
         )
+
         else -> MerchantData(
             title = "Toko",
             bannerRes = R.drawable.splash,
@@ -103,50 +115,151 @@ fun MerchantProductScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
+            .safeDrawingPadding()
     ) {
-        Column(
+        val listState = rememberLazyListState()
+
+        var isScrollingUp by remember { mutableStateOf(true) }
+        var prevIndex by remember { mutableStateOf(0) }
+        var prevOffset by remember { mutableStateOf(0) }
+
+        LaunchedEffect(listState) {
+            snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
+                .collect { (index, offset) ->
+                    isScrollingUp = if (index != prevIndex) {
+                        index < prevIndex
+                    } else {
+                        offset < prevOffset
+                    }
+                    prevIndex = index
+                    prevOffset = offset
+                }
+        }
+
+        // ===== threshold hide/show =====
+        val density = LocalDensity.current
+        val thresholdPx = with(density) { 20.dp.toPx() }
+
+        var showShoppingBar by remember { mutableStateOf(true) }
+        var accumulatedDy by remember { mutableStateOf(0f) }
+
+        val scrollConnection = remember(thresholdPx) {
+            object : NestedScrollConnection {
+                override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                    val dy = available.y
+
+                    // dy negatif = user scroll ke bawah (konten naik)
+                    // dy positif = user scroll ke atas (konten turun)
+                    accumulatedDy += dy
+
+                    if (accumulatedDy <= -thresholdPx) {
+                        showShoppingBar = false
+                        accumulatedDy = 0f
+                    } else if (accumulatedDy >= thresholdPx) {
+                        showShoppingBar = true
+                        accumulatedDy = 0f
+                    }
+
+                    return Offset.Zero
+                }
+            }
+        }
+
+        // ===== CONTENT SCROLL (LAZYCOLUMN) =====
+        LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .nestedScroll(scrollConnection),
+            contentPadding = PaddingValues(bottom = 140.dp)
         ) {
-            // header (banner dan kartu abu-abu)
-            MerchantHeader(
-                title = merchantData.title,
-                bannerRes = merchantData.bannerRes,
-                onBackClick = onBackClick
-            )
+            item {
+                MerchantHeader(
+                    title = merchantData.title,
+                    bannerRes = merchantData.bannerRes,
+                    onBackClick = onBackClick
+                )
+            }
 
-            Spacer(Modifier.height(80.dp))
+            item { Spacer(Modifier.height(80.dp)) }
 
-            Text(
-                text = merchantData.title,
-                color = orange,
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+            item {
+                Text(
+                    text = merchantData.title,
+                    color = orange,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 25.sp,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
 
-            Spacer(Modifier.height(16.dp))
+            item { Spacer(Modifier.height(8.dp)) }
 
             if (merchantData.productsCoffee.isNotEmpty()) {
-                ProductSection("Coffee", merchantData.productsCoffee)
-                Spacer(Modifier.height(16.dp))
+                item { ProductSection("Coffee", merchantData.productsCoffee) }
+                item { Spacer(Modifier.height(16.dp)) }
             }
 
             if (merchantData.productsFood.isNotEmpty()) {
-                ProductSection("Food", merchantData.productsFood)
+                item { ProductSection("Food", merchantData.productsFood) }
             }
 
-            Spacer(Modifier.height(120.dp))
+            item { Spacer(Modifier.height(24.dp)) }
         }
 
-        // Tombol shopping list di bawah
-        ShoppingListBar(
+        val showTopHeader = isScrollingUp && (
+                listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
+                )
+
+        AnimatedVisibility(
+            visible = showTopHeader,
+            enter = slideInVertically { -it } + fadeIn(),
+            exit = slideOutVertically { -it } + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+        ) {
+            Surface(
+                color = Color.White,
+                shadowElevation = 6.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.Black
+                        )
+                    }
+                    Text(
+                        text = merchantData.title,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = orange
+                    )
+                }
+            }
+        }
+
+
+        // ===== FIXED SHOPPING LIST (anim) =====
+        AnimatedVisibility(
+            visible = showShoppingBar,
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut(),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(horizontal = 24.dp, vertical = 24.dp),
-            orange = orange
-        )
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 50.dp)
+        ) {
+            ShoppingListBar(orange = orange)
+        }
     }
 }
 
@@ -161,7 +274,7 @@ private fun MerchantHeader(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(260.dp)
+            .height(280.dp)
     ) {
         Image(
             painter = painterResource(bannerRes),
@@ -199,14 +312,14 @@ private fun MerchantHeader(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = 24.dp)
-                .offset(y = 40.dp),
+                .offset(y = 60.dp),
             shape = RoundedCornerShape(24.dp),
             color = Color(0xFFE0E0E0),
             shadowElevation = 6.dp
         ) {
             Box(
                 modifier = Modifier
-                    .height(110.dp)
+                    .height(140.dp)
                     .fillMaxWidth()
             )
         }
@@ -316,7 +429,9 @@ private fun ShoppingListBar(
         shadowElevation = 8.dp
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+            modifier = Modifier
+                .padding(horizontal = 24.dp, vertical = 12.dp)
+                .width(221.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -327,7 +442,7 @@ private fun ShoppingListBar(
                 fontSize = 15.sp
             )
             Icon(
-                imageVector = Icons.Filled.ShoppingCart,
+                painterResource(R.drawable.cart),
                 contentDescription = "Cart",
                 tint = Color.White,
                 modifier = Modifier.size(22.dp)
@@ -340,7 +455,7 @@ private fun ShoppingListBar(
 @Composable
 fun MerchantProductPreview() {
     MerchantProductScreen(
-        merchantId = "kimo",        // coba salah satu: "kimo", "bachra", "burindo"
-        onBackClick = { /* no-op di preview */ }
+        merchantId = "kimo",
+        onBackClick = {}
     )
 }

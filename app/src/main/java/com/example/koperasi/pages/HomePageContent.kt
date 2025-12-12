@@ -3,6 +3,7 @@ package com.example.koperasi.pages
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -11,6 +12,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,81 +40,71 @@ data class PromoItem(
 @Composable
 fun HomePageContent(
     onLogoutSuccess: () -> Unit,
-    onOpenMerchant: (String) -> Unit   // <-- param wajib
+    onOpenMerchant: (String) -> Unit
 ) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFF5F5F5))
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 80.dp) // ruang bottom bar + FAB
         ) {
-            // HEADER ORANYE + CARD PUTIH
-            DashboardHeader(onOpenMerchant = onOpenMerchant)
+            item {
+                DashboardHeader(onOpenMerchant = onOpenMerchant)
+            }
 
-            Spacer(Modifier.height(100.dp))
+            item { Spacer(Modifier.height(100.dp)) }
 
-            // ====== PROMO ORANGE LAZYROW ======
-            val promoItems = listOf(
-                PromoItem(
-                    title = "Pelatihan & Perizinan",
-                    subtitle = "Kredit Usaha Rakyat",
-                    iconRes = R.drawable.splash
-                ),
-                PromoItem(
-                    title = "Akses Permodalan",
-                    subtitle = "(Keuangan)",
-                    iconRes = R.drawable.splash
-                ),
-                PromoItem(
-                    title = "Akses Permodalan",
-                    subtitle = "(Keuangan)",
-                    iconRes = R.drawable.splash
+            item {
+                val promoItems = listOf(
+                    PromoItem("Pelatihan & Perizinan", "Kredit Usaha Rakyat", R.drawable.splash),
+                    PromoItem("Akses Permodalan", "(Keuangan)", R.drawable.splash),
+                    PromoItem("Akses Permodalan", "(Keuangan)", R.drawable.splash),
                 )
-            )
 
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(promoItems) { item ->
-                    PromoOrangeCard(item = item)
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(promoItems) { item ->
+                        PromoOrangeCard(item = item)
+                    }
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            item { Spacer(Modifier.height(16.dp)) }
 
-            SectionTitle("Program Pelatihan Terbaru")
-            PlaceholderCard(height = 120.dp)
+            item { SectionTitle("Program Pelatihan Terbaru") }
+            item { PlaceholderCard(height = 120.dp) }
 
-            Spacer(Modifier.height(8.dp))
+            item { Spacer(Modifier.height(8.dp)) }
 
-            SectionTitle("Event & Kegiatan Koperasi Gerai")
-            PlaceholderCard(height = 140.dp)
+            item { SectionTitle("Event & Kegiatan Koperasi Gerai") }
+            item { PlaceholderCard(height = 140.dp) }
 
-            Spacer(Modifier.height(8.dp))
+            item { Spacer(Modifier.height(8.dp)) }
 
-            SectionTitle("UMKM NEWS")
-            PlaceholderCard(height = 140.dp)
+            item { SectionTitle("UMKM NEWS") }
+            item { PlaceholderCard(height = 140.dp) }
 
-            Spacer(Modifier.height(24.dp))
+            item { Spacer(Modifier.height(24.dp)) }
 
-            OutlinedButton(
-                onClick = onLogoutSuccess,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(bottom = 32.dp)
-            ) {
-                Text("Logout")
+            item {
+                OutlinedButton(
+                    onClick = onLogoutSuccess,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    Text("Logout")
+                }
             }
-
-            Spacer(Modifier.height(80.dp))
         }
 
-        // FAB chat
+        // FAB chat tetap overlay
         Surface(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -232,24 +227,36 @@ private fun DashboardHeader(
 
             Spacer(Modifier.height(12.dp))
 
+            var isBalanceVisible by remember { mutableStateOf(true) }
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(start = 4.dp)
             ) {
                 Text(
-                    text = "Rp 5.000",
+                    text = if (isBalanceVisible) "Rp 5.000" else "Rp ••••••",
                     color = Color.White,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(Modifier.width(4.dp))
-                Image(
-                    painter = painterResource(id = R.drawable.visible),
-                    contentDescription = "Coin",
-                    modifier = Modifier.size(20.dp),
-                    colorFilter = ColorFilter.tint(Color.White)
-                )
+
+                Spacer(Modifier.width(6.dp))
+
+                IconButton(
+                    onClick = { isBalanceVisible = !isBalanceVisible },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Image(
+                        painter = painterResource(
+                            id = if (isBalanceVisible) R.drawable.visible else R.drawable.visibility
+                        ),
+                        contentDescription = if (isBalanceVisible) "Sembunyikan saldo" else "Tampilkan saldo",
+                        modifier = Modifier.size(20.dp),
+                        colorFilter = ColorFilter.tint(Color.White)
+                    )
+                }
             }
+
 
             Spacer(Modifier.height(16.dp))
 
@@ -352,7 +359,7 @@ private fun AppShortcutItem(
                 contentDescription = label,
                 modifier = Modifier
                     .size(48.dp)
-                    .padding(6.dp)
+                    .padding(0.dp)
             )
         }
 
