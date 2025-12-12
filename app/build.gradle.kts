@@ -61,6 +61,8 @@ dependencies {
     implementation(libs.androidx.compose.foundation.layout)
 
     // 🔹 Tambahin ini buat Preview
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     // Navigation (sebenarnya ini double, tapi biarin dulu, nanti bisa dirapikan)
