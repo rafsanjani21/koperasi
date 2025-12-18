@@ -15,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +33,12 @@ import com.example.koperasi.R
 import com.example.koperasi.pages.HomePageContent
 import com.example.koperasi.pages.MerchantProductScreen
 import com.example.koperasi.pages.UserProfileScreen
+import com.example.koperasi.navigation.CartState
+import com.example.koperasi.pages.PaymentMethodScreen
+import com.example.koperasi.pages.ShoppingListScreen
+import com.example.koperasi.pages.PaymentMethodScreen
+import com.example.koperasi.pages.PaymentMethod
+
 
 sealed class BottomNavItem(
     val route: String,
@@ -46,10 +53,10 @@ sealed class BottomNavItem(
 
 @Composable
 fun MainBottomNavScreen(
-    onLogoutSuccess: () -> Unit,
-    onOpenMerchant: (String) -> Unit
+    onLogoutSuccess: () -> Unit
 ) {
     val navController = rememberNavController()
+    val cartState = remember { CartState() }
 
     val items = listOf(
         BottomNavItem.Menu,
@@ -61,15 +68,12 @@ fun MainBottomNavScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // ✅ kalau mau bottom bar HILANG di halaman merchant:
-    val showBottomBar = currentRoute?.startsWith("merchant") != true
+    val showBottomBar = currentRoute?.startsWith("merchant") != true &&
+            currentRoute != "shopping_list" &&
+            currentRoute != "payment_method"
 
     Scaffold(
-        bottomBar = {
-            if (showBottomBar) {
-                BottomNavBar(items = items, navController = navController)
-            }
-        }
+        bottomBar = { if (showBottomBar) BottomNavBar(items = items, navController = navController) }
     ) { innerPadding ->
 
         NavHost(
@@ -77,10 +81,13 @@ fun MainBottomNavScreen(
             startDestination = BottomNavItem.Menu.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+
             composable(BottomNavItem.Menu.route) {
                 HomePageContent(
                     onLogoutSuccess = onLogoutSuccess,
-                    onOpenMerchant = onOpenMerchant
+                    onOpenMerchant = { merchantId ->
+                        navController.navigate("merchant/$merchantId")
+                    }
                 )
             }
 
@@ -88,7 +95,6 @@ fun MainBottomNavScreen(
             composable(BottomNavItem.Tanggal.route) { SimplePage("Halaman Tanggal") }
             composable(BottomNavItem.Profil.route) { UserProfileScreen() }
 
-            // ✅ ROUTE MERCHANT (dynamic)
             composable(
                 route = "merchant/{merchantId}",
                 arguments = listOf(navArgument("merchantId") { type = NavType.StringType })
@@ -97,12 +103,35 @@ fun MainBottomNavScreen(
 
                 MerchantProductScreen(
                     merchantId = merchantId,
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onAddToCart = { p ->
+                        val id = "${merchantId}_${p.name}"
+                        cartState.addOrIncrement(id, p.name, p.price, p.imageRes)
+                    },
+                    onOpenShoppingList = { navController.navigate("shopping_list") }
+                )
+            }
+
+            composable("shopping_list") {
+                ShoppingListScreen(
+                    cartState = cartState,
+                    onBackClick = { navController.popBackStack() },
+                    onPayClick = { navController.navigate("payment_method") }
+                )
+            }
+
+            composable("payment_method") {
+                PaymentMethodScreen(
+                    onPay = { method ->
+                        // TODO proses bayar
+                    },
+                    onBackClick = { navController.popBackStack() } // ✅ INI yang kemarin kurang
                 )
             }
         }
     }
 }
+
 
 
 @Composable

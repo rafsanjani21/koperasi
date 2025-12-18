@@ -50,7 +50,7 @@ fun HomePageContent(
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 80.dp) // ruang bottom bar + FAB
+            contentPadding = PaddingValues(bottom = 80.dp)
         ) {
             item {
                 DashboardHeader(onOpenMerchant = onOpenMerchant)
@@ -60,7 +60,7 @@ fun HomePageContent(
 
             item {
                 val promoItems = listOf(
-                    PromoItem("Pelatihan & Perizinan", "Kredit Usaha Rakyat", R.drawable.splash),
+                    PromoItem("Pelatihan & Perizinan", "Kredit Usaha Rakyat", R.drawable.kur),
                     PromoItem("Akses Permodalan", "(Keuangan)", R.drawable.splash),
                     PromoItem("Akses Permodalan", "(Keuangan)", R.drawable.splash),
                 )

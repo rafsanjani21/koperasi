@@ -18,10 +18,13 @@ import com.example.koperasi.pages.LoginScreen
 import com.example.koperasi.pages.RegisterScreen
 import com.example.koperasi.pages.SplashScreen
 import kotlinx.coroutines.delay
+import com.example.koperasi.pages.ProductItem
+
 
 // ⬇️ IMPORT INI TAMBAHKAN
 import com.example.koperasi.navigation.MainBottomNavScreen
 import com.example.koperasi.pages.MerchantProductScreen
+import com.example.koperasi.pages.ShoppingListScreen
 
 @Composable
 fun AppNavGraph(
@@ -35,20 +38,10 @@ fun AppNavGraph(
     onManualNameSubmitted: (String) -> Unit,
     onLogout: () -> Unit
 ) {
-    NavHost(
-        navController = navController,
-        startDestination = startDestination
-    ) {
+    NavHost(navController = navController, startDestination = startDestination) {
 
-        // SPLASH
-        composable("splash") {
-            SplashScreen(
-                navController = navController,
-                isLoggedIn = isLoggedIn
-            )
-        }
+        composable("splash") { SplashScreen(navController, isLoggedIn) }
 
-        // LOGIN
         composable("login") {
             LoginScreen(
                 onNavigateRegister = { navController.navigate("register") },
@@ -56,12 +49,9 @@ fun AppNavGraph(
             )
         }
 
-        // REGISTER
         composable("register") {
             val infoMessage =
-                navController.currentBackStackEntry
-                    ?.savedStateHandle
-                    ?.get<String>("info") ?: ""
+                navController.currentBackStackEntry?.savedStateHandle?.get<String>("info") ?: ""
 
             RegisterScreen(
                 infoMessage = infoMessage,
@@ -70,21 +60,13 @@ fun AppNavGraph(
             )
         }
 
-        // COMPLETE PROFILE
         composable("complete_profile") {
-            CompleteProfileScreen(
-                onSubmit = { name ->
-                    onManualNameSubmitted(name)
-                }
-            )
+            CompleteProfileScreen(onSubmit = onManualNameSubmitted)
         }
 
-        // HOME
         composable("home") {
-            val scope = rememberCoroutineScope()
             val authRepo = remember { AuthRepository(ApiClient.api, tokenManager) }
 
-            // auto refresh token tetap jalan
             LaunchedEffect(Unit) {
                 while (true) {
                     delay(5_000)
@@ -95,28 +77,11 @@ fun AppNavGraph(
                 }
             }
 
-            // ⬇️ DI SINI GANTI HomeScreen -> MainBottomNavScreen
+            // ✅ semua navigasi merchant/shopping/payment ada di dalam MainBottomNavScreen
             MainBottomNavScreen(
-                onLogoutSuccess = { onLogout() },
-                onOpenMerchant = { merchantId ->
-                    navController.navigate("product/$merchantId")
-                }
-            )
-        }
-
-        //Merchant
-        composable(
-            route = "product/{merchantId}",
-            arguments = listOf(
-                navArgument("merchantId") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
-            val merchantId = backStackEntry.arguments?.getString("merchantId") ?: ""
-
-            MerchantProductScreen(
-                merchantId = merchantId,
-                onBackClick = { navController.popBackStack() }
+                onLogoutSuccess = onLogout
             )
         }
     }
 }
+

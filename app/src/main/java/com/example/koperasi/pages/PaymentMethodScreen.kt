@@ -62,6 +62,7 @@ enum class PaymentMethod {
 @Composable
 fun PaymentMethodScreen(
     onPay: (PaymentMethod) -> Unit,
+    onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedPaymentMethod by remember { mutableStateOf<PaymentMethod?>(null) }
@@ -95,7 +96,7 @@ fun PaymentMethodScreen(
                     modifier = modifier
                         .size(32.dp)
                         .align(Alignment.CenterStart)
-                        .clickable(onClick = { /* Handle back action */ })
+                        .clickable(onClick = onBackClick)
                 )
             }
         },
@@ -199,7 +200,8 @@ fun PaymentOptionItem(
 fun PreviewPaymentScreen() {
     MaterialTheme {
         PaymentMethodScreen(
-            onPay = {}
+            onPay = {},
+            onBackClick = {}
         )
     }
 }

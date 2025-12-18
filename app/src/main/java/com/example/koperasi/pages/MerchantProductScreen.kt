@@ -49,10 +49,12 @@ import androidx.compose.ui.unit.sp
 import com.example.koperasi.R
 
 data class ProductItem(
+    val id: String,
     val name: String,
     val price: String,
     val imageRes: Int
 )
+
 
 private data class MerchantData(
     val title: String,
@@ -64,7 +66,9 @@ private data class MerchantData(
 @Composable
 fun MerchantProductScreen(
     merchantId: String,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onAddToCart: (ProductItem) -> Unit,
+    onOpenShoppingList: () -> Unit
 ) {
     val orange = Color(0xFFF68E1E)
 
@@ -73,13 +77,13 @@ fun MerchantProductScreen(
             title = "Kimo Kafe",
             bannerRes = R.drawable.kimomenu,
             productsCoffee = listOf(
-                ProductItem("Kopi Kimo", "Rp. 23.000", R.drawable.kopi),
-                ProductItem("Latte Kimo", "Rp. 25.000", R.drawable.kopi),
-                ProductItem("Americano", "Rp. 20.000", R.drawable.kopi),
+                ProductItem("kimo_kopi", "Kopi Kimo", "Rp. 23.000", R.drawable.kopi),
+                ProductItem("kimo_latte", "Latte Kimo", "Rp. 25.000", R.drawable.kopi),
+                ProductItem("kimo_americano", "Americano", "Rp. 20.000", R.drawable.kopi),
             ),
             productsFood = listOf(
-                ProductItem("Snack Kimo", "Rp. 15.000", R.drawable.kopi),
-                ProductItem("Roti Bakar", "Rp. 18.000", R.drawable.kopi),
+                ProductItem("Snack Kimo","Snack Kimo", "Rp. 15.000", R.drawable.kopi),
+                ProductItem("Roti Bakar","Roti Bakar", "Rp. 18.000", R.drawable.kopi),
             )
         )
 
@@ -87,8 +91,8 @@ fun MerchantProductScreen(
             title = "Bachra Farm",
             bannerRes = R.drawable.kimomenu,
             productsCoffee = listOf(
-                ProductItem("Susu Kambing", "Rp. 30.000", R.drawable.kopi),
-                ProductItem("Yogurt", "Rp. 22.000", R.drawable.kopi),
+                ProductItem("Susu Kambing","Susu Kambing", "Rp. 30.000", R.drawable.kopi),
+                ProductItem("Yogurt","Yogurt", "Rp. 22.000", R.drawable.kopi),
             ),
             productsFood = emptyList()
         )
@@ -97,8 +101,8 @@ fun MerchantProductScreen(
             title = "Burindo",
             bannerRes = R.drawable.kimomenu,
             productsCoffee = listOf(
-                ProductItem("Mie Burindo", "Rp. 12.000", R.drawable.kopi),
-                ProductItem("Bakso", "Rp. 15.000", R.drawable.kopi),
+                ProductItem("Mie Burindo","Mie Burindo", "Rp. 12.000", R.drawable.kopi),
+                ProductItem("Bakso","Bakso","Rp. 15.000", R.drawable.kopi),
             ),
             productsFood = emptyList()
         )
@@ -196,13 +200,14 @@ fun MerchantProductScreen(
             item { Spacer(Modifier.height(8.dp)) }
 
             if (merchantData.productsCoffee.isNotEmpty()) {
-                item { ProductSection("Coffee", merchantData.productsCoffee) }
+                item { ProductSection("Coffee", merchantData.productsCoffee, onAddToCart) }
                 item { Spacer(Modifier.height(16.dp)) }
             }
 
             if (merchantData.productsFood.isNotEmpty()) {
-                item { ProductSection("Food", merchantData.productsFood) }
+                item { ProductSection("Food", merchantData.productsFood, onAddToCart) }
             }
+
 
             item { Spacer(Modifier.height(24.dp)) }
         }
@@ -258,7 +263,10 @@ fun MerchantProductScreen(
                 .navigationBarsPadding()
                 .padding(horizontal = 24.dp, vertical = 50.dp)
         ) {
-            ShoppingListBar(orange = orange)
+            ShoppingListBar(
+                orange = orange,
+                onClick = onOpenShoppingList
+            )
         }
     }
 }
@@ -329,14 +337,14 @@ private fun MerchantHeader(
 @Composable
 private fun ProductSection(
     title: String,
-    products: List<ProductItem>
+    products: List<ProductItem>,
+    onAddToCart: (ProductItem) -> Unit
 ) {
     Text(
         text = title,
         fontWeight = FontWeight.Bold,
         fontSize = 18.sp,
-        modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
     )
 
     LazyRow(
@@ -344,13 +352,20 @@ private fun ProductSection(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(products) { product ->
-            ProductCard(product)
+            ProductCard(
+                item = product,
+                onAddToCart = { onAddToCart(product) }
+            )
         }
     }
 }
 
+
 @Composable
-private fun ProductCard(item: ProductItem) {
+private fun ProductCard(
+    item: ProductItem,
+    onAddToCart: () -> Unit
+) {
     Surface(
         modifier = Modifier
             .width(120.dp)
@@ -405,7 +420,7 @@ private fun ProductCard(item: ProductItem) {
                 )
 
                 OutlinedButton(
-                    onClick = { /* TODO tambahkan ke cart */ },
+                    onClick = onAddToCart,
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                     modifier = Modifier.height(28.dp)
                 ) {
@@ -415,6 +430,7 @@ private fun ProductCard(item: ProductItem) {
         }
     }
 }
+
 
 @Composable
 private fun ShoppingListBar(
@@ -456,6 +472,9 @@ private fun ShoppingListBar(
 fun MerchantProductPreview() {
     MerchantProductScreen(
         merchantId = "kimo",
-        onBackClick = {}
+        onBackClick = {},
+        onAddToCart = { /* no-op */ },
+        onOpenShoppingList = { /* no-op */ }
     )
 }
+
