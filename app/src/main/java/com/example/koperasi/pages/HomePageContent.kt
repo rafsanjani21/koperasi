@@ -111,7 +111,7 @@ fun HomePageContent(
                 .offset(x = (-20).dp, y = (-20).dp)
                 .size(60.dp),
             shape = CircleShape,
-            color = Color(0xFFF68E1E),
+            color = Color(0xFF4461AD),
             shadowElevation = 4.dp
         ) {
             IconButton(onClick = { /* TODO */ }) {

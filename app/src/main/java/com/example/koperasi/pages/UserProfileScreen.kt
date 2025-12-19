@@ -61,7 +61,7 @@ fun UserProfileScreen(
                             text = "User",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFF68E1E)
+                            color = Color(0xFF4461AD)
                         )
                     },
                 )
@@ -205,7 +205,7 @@ fun NavigationBottomBar(
 //                        fontWeight = FontWeight.Medium
 //                    ) },
 //                colors = NavigationBarItemDefaults.colors(
-//                    selectedIconColor = Color(0xFFF68E1E)
+//                    selectedIconColor = Color(0xFF4461AD)
 //                ),
 //            )
 //        }
@@ -226,7 +226,7 @@ fun NavigationBottomBar(
                                 text = item.name,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = Color(0xFFF68E1E)
+                                color = Color(0xFF4461AD)
                             )
                         }
                         false -> {
@@ -243,7 +243,7 @@ fun NavigationBottomBar(
                 selected = selectedItem == index,
                 onClick = { selectedItem = index },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color(0xFFF68E1E)
+                    selectedIconColor = Color(0xFF4461AD)
                 ),
             )
         }

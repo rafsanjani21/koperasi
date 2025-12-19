@@ -60,7 +60,7 @@ fun UserProfileDataScreen(
                             text = "Data User",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFF68E1E)
+                            color = Color(0xFF4461AD)
                         )
                     },
                 )

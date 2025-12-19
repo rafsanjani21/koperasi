@@ -143,7 +143,7 @@ private fun BottomNavBar(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val selectedColor = Color(0xFFF68E1E)   // orange
+    val selectedColor = Color(0xFF4461AD)   // orange
     val unselectedColor = Color(0xFF9E9E9E) // abu-abu
 
     Box(

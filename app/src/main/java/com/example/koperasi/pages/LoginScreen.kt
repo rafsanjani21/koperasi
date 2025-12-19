@@ -59,7 +59,7 @@ fun LoginScreen(
                 Text(
                     text = "Log In",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = Color(0xFFF68E1E),
+                    color = Color(0xFF4461AD),
                     fontWeight = FontWeight.Bold,
                     fontSize = 26.sp,
                 )
@@ -117,7 +117,7 @@ fun LoginScreen(
                     )
                     Text(
                         text = "Sign Up",
-                        color = Color(0xFFF68E1E),
+                        color = Color(0xFF4461AD),
                         fontWeight = FontWeight.Bold,
                         textDecoration = TextDecoration.Underline
                     )

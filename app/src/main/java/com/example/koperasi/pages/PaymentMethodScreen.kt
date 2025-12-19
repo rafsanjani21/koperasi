@@ -86,7 +86,7 @@ fun PaymentMethodScreen(
                             text = "Payment Method",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFF68E1E)
+                            color = Color(0xFF4461AD)
                         )
                     },
                 )
@@ -135,7 +135,7 @@ fun PaymentMethodScreen(
                     onClick = { selectedPaymentMethod?.let { onPay(it) } },
                     enabled = selectedPaymentMethod != null,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFF68E1E),
+                        containerColor = Color(0xFF4461AD),
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     modifier = modifier.width(320.dp).height(52.dp)
