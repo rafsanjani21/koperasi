@@ -43,6 +43,4 @@ class CartState {
         val idx = items.indexOfFirst { it.id == id }
         if (idx >= 0) items[idx] = items[idx].copy(notes = notes)
     }
-
-    fun clear() = items.clear()
 }

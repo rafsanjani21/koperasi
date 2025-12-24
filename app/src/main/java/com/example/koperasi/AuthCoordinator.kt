@@ -66,34 +66,12 @@ class AuthCoordinator(
     }
 
     fun sendManualNameToBackend(name: String, loginSource: String = "android") {
-        val idToken = lastFirebaseIdToken ?: return
-
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val res = ApiClient.api.registerGoogle(
-                    RegisterRequest(idToken, name, loginSource)
-                )
-
-                if (!res.isSuccessful) {
-                    val err = res.errorBody()?.string() ?: ""
-
-                    if (err.contains("already registered")) {
-                        loginAfterRegister(idToken, loginSource)
-                        return@launch
-                    }
-
-                    Log.e("REGISTER", "Err: $err")
-                    return@launch
-                }
-
-                // Register sukses → login
-                loginAfterRegister(idToken, loginSource)
-
-            } catch (e: Exception) {
-                Log.e("REGISTER", "ERROR: ${e.message}")
-            }
+        // Backend sekarang minta data lengkap via complete profile.
+        CoroutineScope(Dispatchers.Main).launch {
+            getNavController()?.navigate("complete_profile")
         }
     }
+
 
     fun logout() {
         CoroutineScope(Dispatchers.Main).launch {
@@ -162,6 +140,7 @@ class AuthCoordinator(
 
                 if (firebaseIdToken.isEmpty()) return@launch
                 lastFirebaseIdToken = firebaseIdToken
+                tokenManager.saveIdToken(firebaseIdToken)
 
                 val device = DeviceInfo.getDeviceInfo()
                 val deviceInfo =

@@ -15,6 +15,9 @@ class TokenManager(context: Context) {
         private const val ACCESS_TOKEN = "access_token"
         private const val REFRESH_TOKEN = "refresh_token"
         private const val ACCESS_TOKEN_EXP = "access_token_exp"   // waktu exp dalam detik (unix time)
+
+        // ✅ Tambahan: simpan id_token (firebase/google id token)
+        private const val ID_TOKEN = "id_token"
     }
 
     // Simpan access + refresh token (dipanggil saat login)
@@ -32,27 +35,16 @@ class TokenManager(context: Context) {
         }
     }
 
-    // Update access token SAJA (misal setelah refresh token)
-    fun saveAccessToken(token: String) {
-        val expSec = parseJwtExp(token)
+    fun getAccessToken(): String? = prefs.getString(ACCESS_TOKEN, null)
 
-        prefs.edit {
-            putString(ACCESS_TOKEN, token)
-            if (expSec != null) {
-                putLong(ACCESS_TOKEN_EXP, expSec)
-            } else {
-                remove(ACCESS_TOKEN_EXP)
-            }
-        }
+    fun getRefreshToken(): String? = prefs.getString(REFRESH_TOKEN, null)
+
+    // ✅ ID TOKEN (untuk register complete profile)
+    fun saveIdToken(idToken: String) {
+        prefs.edit { putString(ID_TOKEN, idToken) }
     }
 
-    fun getAccessToken(): String? {
-        return prefs.getString(ACCESS_TOKEN, null)
-    }
-
-    fun getRefreshToken(): String? {
-        return prefs.getString(REFRESH_TOKEN, null)
-    }
+    fun getIdToken(): String? = prefs.getString(ID_TOKEN, null)
 
     // Ambil exp dalam detik (unix time), atau null kalau nggak ada
     fun getAccessTokenExp(): Long? {
@@ -61,6 +53,7 @@ class TokenManager(context: Context) {
     }
 
     fun clearTokens() {
+        // kalau kamu mau clear semuanya
         prefs.edit().clear().apply()
     }
 
@@ -69,7 +62,6 @@ class TokenManager(context: Context) {
     // true kalau token mau habis dalam `thresholdSeconds` (default 5 detik)
     fun isAccessTokenAlmostExpired(thresholdSeconds: Long = 5L): Boolean {
         val expSec = getAccessTokenExp() ?: return false   // kalau nggak tahu exp, anggap aja aman
-
         val nowSec = System.currentTimeMillis() / 1000
         val sisa = expSec - nowSec
         return sisa <= thresholdSeconds

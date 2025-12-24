@@ -33,11 +33,8 @@ import com.example.koperasi.R
 import com.example.koperasi.pages.HomePageContent
 import com.example.koperasi.pages.MerchantProductScreen
 import com.example.koperasi.pages.UserProfileScreen
-import com.example.koperasi.navigation.CartState
 import com.example.koperasi.pages.PaymentMethodScreen
 import com.example.koperasi.pages.ShoppingListScreen
-import com.example.koperasi.pages.PaymentMethodScreen
-import com.example.koperasi.pages.PaymentMethod
 
 
 sealed class BottomNavItem(

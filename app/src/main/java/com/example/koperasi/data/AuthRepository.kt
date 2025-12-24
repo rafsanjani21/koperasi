@@ -11,16 +11,6 @@ class AuthRepository(
     private val tokenManager: TokenManager
 ) {
 
-    // Cek apakah access token hampir kadaluarsa (misal sisa <= 5 detik)
-    private fun isAccessTokenAlmostExpired(thresholdSeconds: Long = 5L): Boolean {
-        val expSec = tokenManager.getAccessTokenExp() ?: return false  // kalau exp belum disimpan, anggap aman
-
-        val nowSec = System.currentTimeMillis() / 1000
-        val sisa = expSec - nowSec
-
-        return sisa <= thresholdSeconds
-    }
-
     // PANGGIL endpoint refresh token
     // - Kirim refresh_token lewat COOKIE: "refresh_token=<value>"
     // - Terima access_token + refresh_token baru dalam JSON body
@@ -70,37 +60,4 @@ class AuthRepository(
         }
     }
 
-    // Bungkus panggilan API:
-    // - Cek token mau habis → refresh dulu (proaktif)
-    // - Kalau tetap dapat 401 → refresh sekali lagi, lalu ulang request
-    suspend fun <T> callWithAutoRefresh(
-        apiCall: suspend () -> Response<T>
-    ): Response<T> {
-
-        // 1. PROACTIVE: kalau mau expired → refresh dulu
-        if (isAccessTokenAlmostExpired()) {
-            val ok = refreshTokens()
-            if (!ok) {
-                Log.w("AuthRepository", "Proaktif refresh gagal, lanjut pakai token lama")
-            }
-        }
-
-        // 2. Coba request pertama
-        val first = apiCall()
-        if (first.code() != 401) {
-            return first
-        }
-
-        Log.w("AuthRepository", "Dapat 401, coba refresh lalu ulang request...")
-
-        // 3. FALLBACK: kalau tetap 401 → coba refresh sekali lagi
-        val refreshed = refreshTokens()
-        if (!refreshed) {
-            Log.e("AuthRepository", "Refresh gagal setelah 401, balikin response awal")
-            return first
-        }
-
-        // 4. Ulang request dengan token baru
-        return apiCall()
-    }
 }

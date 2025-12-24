@@ -4,12 +4,9 @@ import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
 import com.example.koperasi.TokenManager
 import com.example.koperasi.data.AuthRepository
 import com.example.koperasi.data.remote.ApiClient
@@ -18,13 +15,6 @@ import com.example.koperasi.pages.LoginScreen
 import com.example.koperasi.pages.RegisterScreen
 import com.example.koperasi.pages.SplashScreen
 import kotlinx.coroutines.delay
-import com.example.koperasi.pages.ProductItem
-
-
-// ⬇️ IMPORT INI TAMBAHKAN
-import com.example.koperasi.navigation.MainBottomNavScreen
-import com.example.koperasi.pages.MerchantProductScreen
-import com.example.koperasi.pages.ShoppingListScreen
 
 @Composable
 fun AppNavGraph(
@@ -32,10 +22,8 @@ fun AppNavGraph(
     startDestination: String,
     isLoggedIn: Boolean,
     tokenManager: TokenManager,
-    authRepository: AuthRepository,
     onGoogleLogin: () -> Unit,
     onGoogleRegister: () -> Unit,
-    onManualNameSubmitted: (String) -> Unit,
     onLogout: () -> Unit
 ) {
     NavHost(navController = navController, startDestination = startDestination) {
@@ -60,9 +48,25 @@ fun AppNavGraph(
             )
         }
 
+        // Kode yang benar
         composable("complete_profile") {
-            CompleteProfileScreen(onSubmit = onManualNameSubmitted)
+            CompleteProfileScreen(
+                idTokenProvider = {
+                    tokenManager.getIdToken()
+                        ?: throw IllegalStateException("ID Token kosong. Silakan login ulang.")
+                },
+                onSuccess = {
+                    navController.navigate("home") {
+                        popUpTo("complete_profile") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
+
+
+
+
 
         composable("home") {
             val authRepo = remember { AuthRepository(ApiClient.api, tokenManager) }

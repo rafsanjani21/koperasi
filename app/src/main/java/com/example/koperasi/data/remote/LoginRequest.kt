@@ -12,27 +12,6 @@ data class LoginRequest(
     val deviceInfo: String
 )
 
-data class RegisterRequest(
-    @SerializedName("id_token")
-    val idToken: String,
-    val name: String,
-    val loginSource: String
-)
-
-data class RefreshRequest(
-    @SerializedName("access_token")
-    val accessToken: String,
-
-    @SerializedName("refresh_token")
-    val refreshToken: String
-)
-
-
-// Kalau mau pakai untuk endpoint lain
-data class CompleteProfileRequest(
-    val name: String
-)
-
 // =============== RESPONSES ===============
 
 data class LoginResponse(
@@ -42,15 +21,6 @@ data class LoginResponse(
     @SerializedName("refresh_token")
     val refreshToken: String,
 
-    @SerializedName("message")
-    val message: String,
-
-    @SerializedName("user")
-    val user: UserData
-)
-
-
-data class RegisterResponse(
     @SerializedName("message")
     val message: String,
 
