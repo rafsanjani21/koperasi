@@ -29,6 +29,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.koperasi.R
 
 data class PromoItem(
@@ -38,9 +40,9 @@ data class PromoItem(
 )
 
 @Composable
-fun HomePageContent(
+fun HomeScreen(
     onLogoutSuccess: () -> Unit,
-    onOpenMerchant: (String) -> Unit
+    navController: NavController
 ) {
     Box(
         modifier = Modifier
@@ -53,7 +55,9 @@ fun HomePageContent(
             contentPadding = PaddingValues(bottom = 80.dp)
         ) {
             item {
-                DashboardHeader(onOpenMerchant = onOpenMerchant)
+                HomeHeader(
+                    navController = navController
+                )
             }
 
             item { Spacer(Modifier.height(100.dp)) }
@@ -125,60 +129,12 @@ fun HomePageContent(
     }
 }
 
-// ===== PROMO CARD =====
-@Composable
-private fun PromoOrangeCard(
-    item: PromoItem,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier
-            .width(160.dp)
-            .height(123.dp),
-        shape = RoundedCornerShape(20.dp),
-        color = Color(0xFFF9B317),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Box(
-                modifier = Modifier
-                    .width(142.dp)
-                    .height(69.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFFD9D9D9)),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.kur),
-                    contentDescription = item.title,
-                    modifier = Modifier.size(80.dp)
-                )
-            }
-
-            Spacer(Modifier.height(2.dp))
-
-            Text(
-                text = item.title,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-        }
-    }
-}
-
 // ===== HEADER & LAIN2 =====
 @Composable
-private fun DashboardHeader(
-    onOpenMerchant: (String) -> Unit   // <-- terima lambda
+private fun HomeHeader(
+    navController: NavController
 ) {
-    val orange = Color(0xFFF68E1E)
+    val blue = Color(0xFF4461AD)
     val shape = RoundedCornerShape(
         bottomStart = 24.dp,
         bottomEnd = 24.dp
@@ -188,7 +144,7 @@ private fun DashboardHeader(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(12.dp, shape = shape, clip = false)
-            .background(orange, shape = shape)
+            .background(blue, shape = shape)
             .height(324.dp)
     ) {
         Column(
@@ -219,7 +175,7 @@ private fun DashboardHeader(
                 }
 
                 Image(
-                    painter = painterResource(id = R.drawable.logo1),
+                    painter = painterResource(id = R.drawable.gerai_logo),
                     contentDescription = "Logo",
                     modifier = Modifier.size(75.dp)
                 )
@@ -256,7 +212,6 @@ private fun DashboardHeader(
                     )
                 }
             }
-
 
             Spacer(Modifier.height(16.dp))
 
@@ -295,29 +250,31 @@ private fun DashboardHeader(
                     modifier = Modifier.width(204.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    AppShortcutItem("Kimo", R.drawable.kimo) {
-                        onOpenMerchant("kimo")
+                    AppShortcutItem("Gerai Mart", R.drawable.gerai_mart_logo) {
+                        navController.navigate("geraimart")
                     }
-                    AppShortcutItem("Bachra", R.drawable.kambing) {
-                        onOpenMerchant("bachra")
+                    AppShortcutItem("Gerai Agro", R.drawable.gerai_argo_logo) {
+                        navController.navigate("geraiagro")
                     }
-                    AppShortcutItem("Burindo", R.drawable.burindo) {
-                        onOpenMerchant("burindo")
+                    AppShortcutItem("Gerai Niaga", R.drawable.gerai_niaga_logo) {
+                        navController.navigate("gerainiaga")
                     }
                 }
+
                 Spacer(Modifier.height(4.dp))
+
                 Row(
                     modifier = Modifier.width(204.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    AppShortcutItem("PLN", R.drawable.pln) {
-                        onOpenMerchant("pln")
+                    AppShortcutItem("Gerai Digital", R.drawable.gerai_digital_logo) {
+                        navController.navigate("geraidigital")
                     }
-                    AppShortcutItem("Koperasi", R.drawable.gerai) {
-                        onOpenMerchant("gerai")
+                    AppShortcutItem("Spin Reward", R.drawable.spin_reward_logo) {
+                        navController.navigate("spinreward")
                     }
-                    AppShortcutItem("More", R.drawable.more) {
-                        onOpenMerchant("more")
+                    AppShortcutItem("More", R.drawable.more_logo) {
+                        navController.navigate("more")
                     }
                 }
             }
@@ -342,8 +299,56 @@ private fun HeaderActionItem(label: String, iconRes: Int) {
     }
 }
 
+// ===== PROMO CARD =====
 @Composable
-private fun AppShortcutItem(
+private fun PromoOrangeCard(
+    item: PromoItem,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .width(160.dp)
+            .height(123.dp),
+        shape = RoundedCornerShape(20.dp),
+        color = Color(0xFF4461AD),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(142.dp)
+                    .height(69.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0xFFD9D9D9)),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.kur),
+                    contentDescription = item.title,
+                    modifier = Modifier.size(80.dp)
+                )
+            }
+
+            Spacer(Modifier.height(2.dp))
+
+            Text(
+                text = item.title,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+        }
+    }
+}
+
+@Composable
+fun AppShortcutItem(
     label: String,
     iconRes: Int,
     onClick: () -> Unit
@@ -399,8 +404,8 @@ private fun PlaceholderCard(height: Dp) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun HomePagePreview() {
-    HomePageContent(
+    HomeScreen(
         onLogoutSuccess = { },
-        onOpenMerchant = { }   // <-- dummy lambda untuk preview
+        navController = rememberNavController(),
     )
 }
