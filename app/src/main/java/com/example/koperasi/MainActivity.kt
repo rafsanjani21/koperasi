@@ -10,7 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.koperasi.auth.GoogleAuthUiClient
 import com.example.koperasi.data.AuthRepository
-import com.example.koperasi.data.UserRepository
+//import com.example.koperasi.data.UserRepository
 import com.example.koperasi.data.remote.ApiClient
 import com.example.koperasi.navigation.AppNavGraph
 import com.example.koperasi.ui.theme.KoperasiTheme
@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
 
     private val tokenManager: TokenManager by lazy { TokenManager(this) }
     private val authRepository: AuthRepository by lazy { AuthRepository(ApiClient.api, tokenManager) }
-    private val userRepository: UserRepository by lazy { UserRepository(ApiClient.api, authRepository, tokenManager) }
+//    private val userRepository: UserRepository by lazy { UserRepository(ApiClient.api, authRepository, tokenManager) }
 
     private lateinit var authCoordinator: AuthCoordinator
 
@@ -53,13 +53,13 @@ class MainActivity : ComponentActivity() {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     AppNavGraph(
                         navController = navController,
-                        startDestination = "splash",
+                        startDestination = "home",
                         isLoggedIn = isLoggedIn,
                         tokenManager = tokenManager,
-                        authRepository = authRepository,
+//                        authRepository = authRepository,
                         onGoogleLogin = { authCoordinator.startGoogleSignIn(isRegisterFlow = false) },
                         onGoogleRegister = { authCoordinator.startGoogleSignIn(isRegisterFlow = true) },
-                        onManualNameSubmitted = { name -> authCoordinator.sendManualNameToBackend(name) },
+//                        onManualNameSubmitted = { name -> authCoordinator.sendManualNameToBackend(name) },
                         onLogout = { authCoordinator.logout() }
                     )
                 }

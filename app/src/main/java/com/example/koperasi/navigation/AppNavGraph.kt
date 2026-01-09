@@ -64,10 +64,6 @@ fun AppNavGraph(
             )
         }
 
-
-
-
-
         composable("home") {
             val authRepo = remember { AuthRepository(ApiClient.api, tokenManager) }
 

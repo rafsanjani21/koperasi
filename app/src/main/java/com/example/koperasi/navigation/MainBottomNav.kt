@@ -30,11 +30,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.koperasi.R
-import com.example.koperasi.pages.HomePageContent
+import com.example.koperasi.pages.HomeScreen
 import com.example.koperasi.pages.MerchantProductScreen
 import com.example.koperasi.pages.UserProfileScreen
 import com.example.koperasi.pages.PaymentMethodScreen
 import com.example.koperasi.pages.ShoppingListScreen
+import com.example.koperasi.pages.geraimart.GeraiMartScreen
 
 
 sealed class BottomNavItem(
@@ -42,7 +43,7 @@ sealed class BottomNavItem(
     val label: String,
     val iconRes: Int
 ) {
-    data object Menu : BottomNavItem("home_menu", "Menu", R.drawable.menu)
+    data object Menu : BottomNavItem("home", "Menu", R.drawable.menu)
     data object Daftar : BottomNavItem("daftar", "Daftar", R.drawable.daftar)
     data object Tanggal : BottomNavItem("tanggal", "Tanggal", R.drawable.tanggal)
     data object Profil : BottomNavItem("profil", "Profil", R.drawable.profil)
@@ -66,6 +67,7 @@ fun MainBottomNavScreen(
     val currentRoute = navBackStackEntry?.destination?.route
 
     val showBottomBar = currentRoute?.startsWith("merchant") != true &&
+            currentRoute?.startsWith("geraimart") != true &&
             currentRoute != "shopping_list" &&
             currentRoute != "payment_method"
 
@@ -79,18 +81,16 @@ fun MainBottomNavScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
 
-            composable(BottomNavItem.Menu.route) {
-                HomePageContent(
-                    onLogoutSuccess = onLogoutSuccess,
-                    onOpenMerchant = { merchantId ->
-                        navController.navigate("merchant/$merchantId")
-                    }
-                )
-            }
-
             composable(BottomNavItem.Daftar.route) { SimplePage("Halaman Daftar") }
             composable(BottomNavItem.Tanggal.route) { SimplePage("Halaman Tanggal") }
             composable(BottomNavItem.Profil.route) { UserProfileScreen() }
+
+            composable(BottomNavItem.Menu.route) {
+                HomeScreen(
+                    onLogoutSuccess = onLogoutSuccess,
+                    navController = navController
+                )
+            }
 
             composable(
                 route = "merchant/{merchantId}",
@@ -105,7 +105,8 @@ fun MainBottomNavScreen(
                         val id = "${merchantId}_${p.name}"
                         cartState.addOrIncrement(id, p.name, p.price, p.imageRes)
                     },
-                    onOpenShoppingList = { navController.navigate("shopping_list") }
+                    onOpenShoppingList = { navController.navigate("shopping_list") },
+                    navController = navController
                 )
             }
 
@@ -114,6 +115,18 @@ fun MainBottomNavScreen(
                     cartState = cartState,
                     onBackClick = { navController.popBackStack() },
                     onPayClick = { navController.navigate("payment_method") }
+                )
+            }
+
+            composable("geraimart") {
+                GeraiMartScreen(
+                    onBackClick = { navController.navigate("home"){ popUpTo(0) } },
+                    onAddToCart = { p ->
+                        val id = "geraimart_${p.name}"
+                        cartState.addOrIncrement(id, p.name, p.price, p.imageRes)
+                    },
+                    onOpenShoppingList = { navController.navigate("shopping_list") },
+                    navController = navController
                 )
             }
 
@@ -136,7 +149,6 @@ private fun BottomNavBar(
     items: List<BottomNavItem>,
     navController: NavHostController
 ) {
-    val shape = RoundedCornerShape(24.dp)
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -148,9 +160,6 @@ private fun BottomNavBar(
         contentAlignment = Alignment.BottomCenter
     ) {
         NavigationBar(
-            modifier = Modifier
-                .shadow(8.dp, shape = shape, clip = false)
-                .clip(shape),
             containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = 0.dp
         ) {

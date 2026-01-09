@@ -1,5 +1,6 @@
-package com.example.koperasi.pages
+package com.example.koperasi.pages.geraimart
 
+import android.graphics.Color.blue
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -13,12 +14,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
@@ -34,86 +35,51 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.koperasi.R
-
-data class ProductItem(
-    val id: String,
-    val name: String,
-    val price: String,
-    val imageRes: Int
-)
-
-
-private data class MerchantData(
-    val title: String,
-    val bannerRes: Int,
-    val productsCoffee: List<ProductItem>,
-    val productsFood: List<ProductItem>
-)
+import com.example.koperasi.pages.AppShortcutItem
+import com.example.koperasi.pages.MerchantData
+import com.example.koperasi.pages.ProductItem
+import com.example.koperasi.pages.ProductSection
 
 @Composable
-fun MerchantProductScreen(
-    merchantId: String,
+fun GeraiMartScreen(
     onBackClick: () -> Unit,
     onAddToCart: (ProductItem) -> Unit,
-    onOpenShoppingList: () -> Unit
+    onOpenShoppingList: () -> Unit,
+    navController: NavController
 ) {
-    val orange = Color(0xFFF68E1E)
+    val blue = Color(0xFF4461AD)
 
-    val merchantData = when (merchantId) {
-        "kimo" -> MerchantData(
-            title = "Kimo Kafe",
-            bannerRes = R.drawable.kimomenu,
-            productsCoffee = listOf(
-                ProductItem("kimo_kopi", "Kopi Kimo", "Rp. 23.000", R.drawable.kopi),
-                ProductItem("kimo_latte", "Latte Kimo", "Rp. 25.000", R.drawable.kopi),
-                ProductItem("kimo_americano", "Americano", "Rp. 20.000", R.drawable.kopi),
-            ),
-            productsFood = listOf(
-                ProductItem("Snack Kimo","Snack Kimo", "Rp. 15.000", R.drawable.kopi),
-                ProductItem("Roti Bakar","Roti Bakar", "Rp. 18.000", R.drawable.kopi),
-            )
+    val merchantData = MerchantData(
+        title = "Gerai Mart",
+        bannerRes = R.drawable.gerai_mart_banner,
+        productsCoffee = listOf(
+            ProductItem("gm_beras", "Beras Premium", "Rp. 50.000", R.drawable.kopi),
+            ProductItem("gm_minyak", "Minyak Goreng", "Rp. 35.000", R.drawable.kopi),
+            ProductItem("gm_gula", "Gula Pasir", "Rp. 15.000", R.drawable.kopi),
+        ),
+        productsFood = listOf(
+            ProductItem("gm_telur", "Telur Ayam", "Rp. 25.000", R.drawable.kopi),
+            ProductItem("gm_susu", "Susu Cair", "Rp. 20.000", R.drawable.kopi),
         )
-
-        "bachra" -> MerchantData(
-            title = "Bachra Farm",
-            bannerRes = R.drawable.kimomenu,
-            productsCoffee = listOf(
-                ProductItem("Susu Kambing","Susu Kambing", "Rp. 30.000", R.drawable.kopi),
-                ProductItem("Yogurt","Yogurt", "Rp. 22.000", R.drawable.kopi),
-            ),
-            productsFood = emptyList()
-        )
-
-        "burindo" -> MerchantData(
-            title = "Burindo",
-            bannerRes = R.drawable.kimomenu,
-            productsCoffee = listOf(
-                ProductItem("Mie Burindo","Mie Burindo", "Rp. 12.000", R.drawable.kopi),
-                ProductItem("Bakso","Bakso","Rp. 15.000", R.drawable.kopi),
-            ),
-            productsFood = emptyList()
-        )
-
-        else -> MerchantData(
-            title = "Toko",
-            bannerRes = R.drawable.splash,
-            productsCoffee = emptyList(),
-            productsFood = emptyList()
-        )
-    }
+    )
 
     Box(
         modifier = Modifier
@@ -122,23 +88,6 @@ fun MerchantProductScreen(
             .safeDrawingPadding()
     ) {
         val listState = rememberLazyListState()
-
-        var isScrollingUp by remember { mutableStateOf(true) }
-        var prevIndex by remember { mutableStateOf(0) }
-        var prevOffset by remember { mutableStateOf(0) }
-
-        LaunchedEffect(listState) {
-            snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
-                .collect { (index, offset) ->
-                    isScrollingUp = if (index != prevIndex) {
-                        index < prevIndex
-                    } else {
-                        offset < prevOffset
-                    }
-                    prevIndex = index
-                    prevOffset = offset
-                }
-        }
 
         // ===== threshold hide/show =====
         val density = LocalDensity.current
@@ -178,80 +127,52 @@ fun MerchantProductScreen(
             contentPadding = PaddingValues(bottom = 140.dp)
         ) {
             item {
-                MerchantHeader(
-                    title = merchantData.title,
-                    bannerRes = merchantData.bannerRes,
-                    onBackClick = onBackClick
-                )
+                GeraiMartHeader(
+                    navController = navController,
+                    onBackClick = onBackClick)
             }
 
-            item { Spacer(Modifier.height(80.dp)) }
+            item { Spacer(Modifier.height(90.dp)) }
 
-            item {
+            item{
                 Text(
-                    text = merchantData.title,
-                    color = orange,
+                    text = "Gerai Mart",
                     fontWeight = FontWeight.Bold,
                     fontSize = 25.sp,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(start = 45.dp, bottom = 12.dp),
+                    color = Color(0xFF4461AD)
                 )
             }
 
-            item { Spacer(Modifier.height(8.dp)) }
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                ) {
+                    Text(
+                        text = "Belanja Lebih Mudah di Gerai Mart!",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    Text(
+                        text = "Sekali mampir, semua belanja beres!",
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            }
 
             if (merchantData.productsCoffee.isNotEmpty()) {
-                item { ProductSection("Coffee", merchantData.productsCoffee, onAddToCart) }
+                item { ProductSection(merchantData.productsCoffee, onAddToCart, isHorizontal = true) }
                 item { Spacer(Modifier.height(16.dp)) }
             }
 
             if (merchantData.productsFood.isNotEmpty()) {
-                item { ProductSection("Food", merchantData.productsFood, onAddToCart) }
+                item { ProductSection( merchantData.productsFood, onAddToCart, isHorizontal = true) }
             }
 
-
-            item { Spacer(Modifier.height(24.dp)) }
         }
-
-        val showTopHeader = isScrollingUp && (
-                listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
-                )
-
-        AnimatedVisibility(
-            visible = showTopHeader,
-            enter = slideInVertically { -it } + fadeIn(),
-            exit = slideOutVertically { -it } + fadeOut(),
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-        ) {
-            Surface(
-                color = Color.White,
-                shadowElevation = 6.dp
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.Black
-                        )
-                    }
-                    Text(
-                        text = merchantData.title,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = orange
-                    )
-                }
-            }
-        }
-
 
         // ===== FIXED SHOPPING LIST (anim) =====
         AnimatedVisibility(
@@ -264,7 +185,7 @@ fun MerchantProductScreen(
                 .padding(horizontal = 24.dp, vertical = 50.dp)
         ) {
             ShoppingListBar(
-                orange = orange,
+                blue = blue,
                 onClick = onOpenShoppingList
             )
         }
@@ -274,157 +195,87 @@ fun MerchantProductScreen(
 // ==== komponen bantu ====
 
 @Composable
-private fun MerchantHeader(
-    title: String,
-    bannerRes: Int,
+private fun GeraiMartHeader(
+    navController: NavController,
     onBackClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp)
+            .height(200.dp)
     ) {
         Image(
-            painter = painterResource(bannerRes),
-            contentDescription = title,
+            painter = painterResource(R.drawable.gerai_mart_banner),
+            contentDescription = "geraimartbanner",
             modifier = Modifier
                 .fillMaxWidth()
                 .height(250.dp),
-            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            contentScale = ContentScale.Crop
         )
 
-        IconButton(
-            onClick = onBackClick,
-            modifier = Modifier
-                .padding(start = 8.dp, top = 16.dp)
-                .align(Alignment.TopStart)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = Color.White
-            )
-        }
-
-        Text(
-            text = title,
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 24.dp)
-        )
-
-        Surface(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(horizontal = 24.dp)
-                .offset(y = 60.dp),
-            shape = RoundedCornerShape(24.dp),
-            color = Color(0xFFE0E0E0),
-            shadowElevation = 6.dp
-        ) {
-            Box(
-                modifier = Modifier
-                    .height(140.dp)
-                    .fillMaxWidth()
-            )
-        }
-    }
-}
-
-@Composable
-private fun ProductSection(
-    title: String,
-    products: List<ProductItem>,
-    onAddToCart: (ProductItem) -> Unit
-) {
-    Text(
-        text = title,
-        fontWeight = FontWeight.Bold,
-        fontSize = 18.sp,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-    )
-
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(products) { product ->
-            ProductCard(
-                item = product,
-                onAddToCart = { onAddToCart(product) }
-            )
-        }
-    }
-}
-
-
-@Composable
-private fun ProductCard(
-    item: ProductItem,
-    onAddToCart: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .width(120.dp)
-            .height(180.dp),
-        shape = RoundedCornerShape(16.dp),
-        color = Color.White,
-        shadowElevation = 3.dp
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(6.dp)
-        ) {
-            Image(
-                painter = painterResource(item.imageRes),
-                contentDescription = item.name,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(90.dp)
-                    .clip(RoundedCornerShape(12.dp)),
-                contentScale = androidx.compose.ui.layout.ContentScale.Crop
-            )
-
-            Spacer(Modifier.height(6.dp))
-
-            Text(
-                text = item.name,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Text(
-                text = item.price,
-                fontSize = 12.sp,
-                color = Color(0xFF555555)
-            )
-
-            Spacer(Modifier.height(4.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            IconButton(
+                onClick = onBackClick,
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.heart),
-                    contentDescription = "Favorite",
-                    tint = Color.Black,
-                    modifier = Modifier.size(18.dp)
+                    imageVector = Icons.Default.KeyboardArrowLeft,
+                    contentDescription = "Back",
+                    tint = Color.White
                 )
+            }
 
-                OutlinedButton(
-                    onClick = onAddToCart,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                    modifier = Modifier.height(28.dp)
+            Text(
+                text = "Gerai Mart",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f),
+            )
+
+            IconButton(
+                onClick = onBackClick,
+                enabled = true
+            ) {
+
+            }
+        }
+
+        Card(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 16.dp)
+                .offset(y = 80.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .width(304.dp)
+                    .height(150.dp)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Row(
+                    modifier = Modifier.width(204.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Add", fontSize = 11.sp)
+                    AppShortcutItem("Kimo Cafe", R.drawable.kimo_logo) {
+                        navController.navigate("merchant/kimo")
+                    }
+
+                    AppShortcutItem("Bachra Farm", R.drawable.bachrafarm_logo) {
+                        navController.navigate("merchant/bachra")
+                    }
+
+                    AppShortcutItem("Burindo", R.drawable.burindo_logo) {
+                        navController.navigate("merchant/burindo")
+                    }
                 }
             }
         }
@@ -435,13 +286,13 @@ private fun ProductCard(
 @Composable
 private fun ShoppingListBar(
     modifier: Modifier = Modifier,
-    orange: Color,
+    blue: Color,
     onClick: () -> Unit = {}
 ) {
     Surface(
         modifier = modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(50),
-        color = orange,
+        color = blue,
         shadowElevation = 8.dp
     ) {
         Row(
@@ -469,12 +320,12 @@ private fun ShoppingListBar(
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun MerchantProductPreview() {
-    MerchantProductScreen(
-        merchantId = "kimo",
+fun GeraiMartPreview() {
+    GeraiMartScreen(
         onBackClick = {},
         onAddToCart = { /* no-op */ },
-        onOpenShoppingList = { /* no-op */ }
+        onOpenShoppingList = { /* no-op */ },
+        navController = rememberNavController()
     )
 }
 

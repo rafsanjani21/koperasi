@@ -6,8 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -27,6 +29,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -40,10 +43,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.style.TextAlign
 import com.example.koperasi.R
 import com.example.koperasi.ui.theme.KoperasiTheme
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,28 +54,17 @@ fun UserProfileScreen(
 ) {
     Scaffold(
         topBar = {
-            Box(
-                modifier = modifier.padding(6.dp)
-            ) {
-                CenterAlignedTopAppBar(
-                    title = {
-                        Text(
-                            text = "User",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF4461AD)
-                        )
-                    },
-                )
-                Icon(
-                    imageVector = Icons.AutoMirrored.Default.KeyboardArrowLeft,
-                    contentDescription = "Back",
-                    modifier = modifier
-                        .size(40.dp)
-                        .align(Alignment.CenterStart)
-                        .clickable(onClick = { /* Handle back action */ })
-                )
-            }
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "User",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            )
         },
          modifier = modifier.fillMaxSize()
     ) { innerPadding ->

@@ -1,5 +1,6 @@
 package com.example.koperasi.pages
 
+import android.graphics.Color.blue
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -13,22 +14,38 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.foundation.pager.PagerSnapDistance
+import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -39,14 +56,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.koperasi.R
+import kotlinx.coroutines.launch
 
 data class ProductItem(
     val id: String,
@@ -56,21 +78,23 @@ data class ProductItem(
 )
 
 
-private data class MerchantData(
+data class MerchantData(
     val title: String,
     val bannerRes: Int,
     val productsCoffee: List<ProductItem>,
     val productsFood: List<ProductItem>
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MerchantProductScreen(
     merchantId: String,
     onBackClick: () -> Unit,
     onAddToCart: (ProductItem) -> Unit,
-    onOpenShoppingList: () -> Unit
+    onOpenShoppingList: () -> Unit,
+    navController: NavController
 ) {
-    val orange = Color(0xFFF68E1E)
+    val blue = Color(0xFF4461AD)
 
     val merchantData = when (merchantId) {
         "kimo" -> MerchantData(
@@ -78,6 +102,12 @@ fun MerchantProductScreen(
             bannerRes = R.drawable.kimomenu,
             productsCoffee = listOf(
                 ProductItem("kimo_kopi", "Kopi Kimo", "Rp. 23.000", R.drawable.kopi),
+                ProductItem("kimo_latte", "Latte Kimo", "Rp. 25.000", R.drawable.kopi),
+                ProductItem("kimo_latte", "Latte Kimo", "Rp. 25.000", R.drawable.kopi),
+                ProductItem("kimo_latte", "Latte Kimo", "Rp. 25.000", R.drawable.kopi),
+                ProductItem("kimo_latte", "Latte Kimo", "Rp. 25.000", R.drawable.kopi),
+                ProductItem("kimo_latte", "Latte Kimo", "Rp. 25.000", R.drawable.kopi),
+                ProductItem("kimo_latte", "Latte Kimo", "Rp. 25.000", R.drawable.kopi),
                 ProductItem("kimo_latte", "Latte Kimo", "Rp. 25.000", R.drawable.kopi),
                 ProductItem("kimo_americano", "Americano", "Rp. 20.000", R.drawable.kopi),
             ),
@@ -115,316 +145,326 @@ fun MerchantProductScreen(
         )
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-            .safeDrawingPadding()
-    ) {
-        val listState = rememberLazyListState()
+    val hasFood = merchantData.productsFood.isNotEmpty()
 
-        var isScrollingUp by remember { mutableStateOf(true) }
-        var prevIndex by remember { mutableStateOf(0) }
-        var prevOffset by remember { mutableStateOf(0) }
-
-        LaunchedEffect(listState) {
-            snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
-                .collect { (index, offset) ->
-                    isScrollingUp = if (index != prevIndex) {
-                        index < prevIndex
-                    } else {
-                        offset < prevOffset
-                    }
-                    prevIndex = index
-                    prevOffset = offset
-                }
-        }
-
-        // ===== threshold hide/show =====
-        val density = LocalDensity.current
-        val thresholdPx = with(density) { 20.dp.toPx() }
-
-        var showShoppingBar by remember { mutableStateOf(true) }
-        var accumulatedDy by remember { mutableStateOf(0f) }
-
-        val scrollConnection = remember(thresholdPx) {
-            object : NestedScrollConnection {
-                override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                    val dy = available.y
-
-                    // dy negatif = user scroll ke bawah (konten naik)
-                    // dy positif = user scroll ke atas (konten turun)
-                    accumulatedDy += dy
-
-                    if (accumulatedDy <= -thresholdPx) {
-                        showShoppingBar = false
-                        accumulatedDy = 0f
-                    } else if (accumulatedDy >= thresholdPx) {
-                        showShoppingBar = true
-                        accumulatedDy = 0f
-                    }
-
-                    return Offset.Zero
-                }
-            }
-        }
-
-        // ===== CONTENT SCROLL (LAZYCOLUMN) =====
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .nestedScroll(scrollConnection),
-            contentPadding = PaddingValues(bottom = 140.dp)
-        ) {
-            item {
-                MerchantHeader(
-                    title = merchantData.title,
-                    bannerRes = merchantData.bannerRes,
-                    onBackClick = onBackClick
-                )
-            }
-
-            item { Spacer(Modifier.height(80.dp)) }
-
-            item {
-                Text(
-                    text = merchantData.title,
-                    color = orange,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 25.sp,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-            }
-
-            item { Spacer(Modifier.height(8.dp)) }
-
-            if (merchantData.productsCoffee.isNotEmpty()) {
-                item { ProductSection("Coffee", merchantData.productsCoffee, onAddToCart) }
-                item { Spacer(Modifier.height(16.dp)) }
-            }
-
-            if (merchantData.productsFood.isNotEmpty()) {
-                item { ProductSection("Food", merchantData.productsFood, onAddToCart) }
-            }
-
-
-            item { Spacer(Modifier.height(24.dp)) }
-        }
-
-        val showTopHeader = isScrollingUp && (
-                listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
-                )
-
-        AnimatedVisibility(
-            visible = showTopHeader,
-            enter = slideInVertically { -it } + fadeIn(),
-            exit = slideOutVertically { -it } + fadeOut(),
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-        ) {
-            Surface(
-                color = Color.White,
-                shadowElevation = 6.dp
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.Black
-                        )
-                    }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
                     Text(
                         text = merchantData.title,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = orange
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
                     )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = blue,
+                    titleContentColor = Color.White,
+                ),
+                navigationIcon = {
+                    IconButton(
+                        onClick = { navController.navigate("geraimart") },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowLeft,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(
+                        onClick = onBackClick,
+                        enabled = true
+                    ) {
+
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .padding(innerPadding)
+                .safeDrawingPadding()
+        ) {
+            val listState = rememberLazyListState()
+
+            // ===== threshold hide/show =====
+            val density = LocalDensity.current
+            val thresholdPx = with(density) { 20.dp.toPx() }
+
+            var showShoppingBar by remember { mutableStateOf(true) }
+            var accumulatedDy by remember { mutableStateOf(0f) }
+
+            val scrollConnection = remember(thresholdPx) {
+                object : NestedScrollConnection {
+                    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                        val dy = available.y
+
+                        // dy negatif = user scroll ke bawah (konten naik)
+                        // dy positif = user scroll ke atas (konten turun)
+                        accumulatedDy += dy
+
+                        if (accumulatedDy <= -thresholdPx) {
+                            showShoppingBar = false
+                            accumulatedDy = 0f
+                        } else if (accumulatedDy >= thresholdPx) {
+                            showShoppingBar = true
+                            accumulatedDy = 0f
+                        }
+
+                        return Offset.Zero
+                    }
+                }
+            }
+
+            // ===== CONTENT SCROLL (LAZYCOLUMN) =====
+            var selectedTab by remember { mutableStateOf(0) }
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .nestedScroll(scrollConnection),
+                contentPadding = PaddingValues(bottom = 140.dp)
+            ) {
+
+                if (hasFood) {
+                    item {
+                        Column {
+                            TabRow(
+                                selectedTabIndex = selectedTab,  // ✅ GANTI DARI pagerState
+                                containerColor = Color.White,
+                                indicator = { tabPositions ->
+                                    TabRowDefaults.Indicator(
+                                        modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                                        color = Color(0xFF4461AD)
+                                    )
+                                }
+                            ) {
+                                Tab(
+                                    selected = selectedTab == 0,
+                                    onClick = { selectedTab = 0 },  // ✅ LANGSUNG UPDATE STATE
+                                    text = { Text("Drinks") }
+                                )
+                                Tab(
+                                    selected = selectedTab == 1,
+                                    onClick = { selectedTab = 1 },  // ✅ LANGSUNG UPDATE STATE
+                                    text = { Text("Food") }
+                                )
+                            }
+
+                            when (selectedTab) {
+                                0 -> ProductSection(
+                                    merchantData.productsCoffee,
+                                    onAddToCart,
+                                    isHorizontal = false
+                                )
+                                1 -> ProductSection(
+                                    merchantData.productsFood,
+                                    onAddToCart,
+                                    isHorizontal = false
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    item {
+                        ProductSection(merchantData.productsCoffee, onAddToCart, isHorizontal = false)
+                    }
+                }
+
+                item { Spacer(Modifier.height(24.dp)) }
+            }
+
+            // ===== FIXED SHOPPING LIST (anim) =====
+            AnimatedVisibility(
+                visible = showShoppingBar,
+                enter = slideInVertically { it } + fadeIn(),
+                exit = slideOutVertically { it } + fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(horizontal = 24.dp, vertical = 50.dp)
+            ) {
+                ShoppingListBar(
+                    blue = blue,
+                    onClick = onOpenShoppingList
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ProductSection(
+    products: List<ProductItem>,
+    onAddToCart: (ProductItem) -> Unit,
+    isHorizontal: Boolean = false
+) {
+    if (isHorizontal) {
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(products) { product ->
+                ProductCard(
+                    item = product,
+                    onAddToCart = { onAddToCart(product) },
+                    isHorizontal = true
+                )
+            }
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 8.dp, end = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            products.forEach { product ->
+                ProductCard(
+                    item = product,
+                    onAddToCart = { onAddToCart(product) },
+                    isHorizontal = false
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+fun ProductCard(
+    item: ProductItem,
+    onAddToCart: () -> Unit,
+    isHorizontal: Boolean = false
+) {
+    if (isHorizontal) {
+        Surface(
+            modifier = Modifier
+                .width(120.dp)
+                .height(180.dp),
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White,
+            shadowElevation = 3.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(6.dp)
+            ) {
+                Image(
+                    painter = painterResource(item.imageRes),
+                    contentDescription = item.name,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(90.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop
+                )
+
+                Spacer(Modifier.height(6.dp))
+
+                Text(
+                    text = item.name,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Text(
+                    text = item.price,
+                    fontSize = 12.sp,
+                    color = Color(0xFF555555)
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.heart),
+                        contentDescription = "Favorite",
+                        tint = Color.Black,
+                        modifier = Modifier.size(18.dp)
+                    )
+
+                    OutlinedButton(
+                        onClick = onAddToCart,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                        modifier = Modifier.height(28.dp)
+                    ) {
+                        Text("Add", fontSize = 11.sp)
+                    }
                 }
             }
         }
-
-
-        // ===== FIXED SHOPPING LIST (anim) =====
-        AnimatedVisibility(
-            visible = showShoppingBar,
-            enter = slideInVertically { it } + fadeIn(),
-            exit = slideOutVertically { it } + fadeOut(),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 50.dp)
-        ) {
-            ShoppingListBar(
-                orange = orange,
-                onClick = onOpenShoppingList
-            )
-        }
-    }
-}
-
-// ==== komponen bantu ====
-
-@Composable
-private fun MerchantHeader(
-    title: String,
-    bannerRes: Int,
-    onBackClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(280.dp)
-    ) {
-        Image(
-            painter = painterResource(bannerRes),
-            contentDescription = title,
+    } else {
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(250.dp),
-            contentScale = androidx.compose.ui.layout.ContentScale.Crop
-        )
-
-        IconButton(
-            onClick = onBackClick,
-            modifier = Modifier
-                .padding(start = 8.dp, top = 16.dp)
-                .align(Alignment.TopStart)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = Color.White
-            )
-        }
-
-        Text(
-            text = title,
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 24.dp)
-        )
-
-        Surface(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(horizontal = 24.dp)
-                .offset(y = 60.dp),
-            shape = RoundedCornerShape(24.dp),
-            color = Color(0xFFE0E0E0),
-            shadowElevation = 6.dp
-        ) {
-            Box(
-                modifier = Modifier
-                    .height(140.dp)
-                    .fillMaxWidth()
-            )
-        }
-    }
-}
-
-@Composable
-private fun ProductSection(
-    title: String,
-    products: List<ProductItem>,
-    onAddToCart: (ProductItem) -> Unit
-) {
-    Text(
-        text = title,
-        fontWeight = FontWeight.Bold,
-        fontSize = 18.sp,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-    )
-
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(products) { product ->
-            ProductCard(
-                item = product,
-                onAddToCart = { onAddToCart(product) }
-            )
-        }
-    }
-}
-
-
-@Composable
-private fun ProductCard(
-    item: ProductItem,
-    onAddToCart: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .width(120.dp)
-            .height(180.dp),
-        shape = RoundedCornerShape(16.dp),
-        color = Color.White,
-        shadowElevation = 3.dp
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
                 .padding(6.dp)
         ) {
             Image(
                 painter = painterResource(item.imageRes),
                 contentDescription = item.name,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(90.dp)
+                    .size(80.dp)
                     .clip(RoundedCornerShape(12.dp)),
-                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                contentScale = ContentScale.Crop
             )
 
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.width(12.dp))
 
-            Text(
-                text = item.name,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Text(
-                text = item.price,
-                fontSize = 12.sp,
-                color = Color(0xFF555555)
-            )
-
-            Spacer(Modifier.height(4.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 8.dp)
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.heart),
-                    contentDescription = "Favorite",
-                    tint = Color.Black,
-                    modifier = Modifier.size(18.dp)
+                Text(
+                    text = item.name,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
-                OutlinedButton(
-                    onClick = onAddToCart,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                    modifier = Modifier.height(28.dp)
+                Text(
+                    text = item.price,
+                    fontSize = 12.sp,
+                    color = Color(0xFF555555)
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Add", fontSize = 11.sp)
+                    OutlinedButton(
+                        onClick = onAddToCart,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                        modifier = Modifier.height(28.dp)
+                    ) {
+                        Text("Add", fontSize = 11.sp)
+                    }
+                    Icon(
+                        painter = painterResource(R.drawable.heart),
+                        contentDescription = "Favorite",
+                        tint = Color.Black,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
         }
@@ -435,13 +475,13 @@ private fun ProductCard(
 @Composable
 private fun ShoppingListBar(
     modifier: Modifier = Modifier,
-    orange: Color,
+    blue: Color,
     onClick: () -> Unit = {}
 ) {
     Surface(
         modifier = modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(50),
-        color = orange,
+        color = blue,
         shadowElevation = 8.dp
     ) {
         Row(
@@ -467,6 +507,21 @@ private fun ShoppingListBar(
     }
 }
 
+//@Preview(showBackground = true)
+//@Composable
+//private fun ProductCardPreview() {
+//    ProductCard(
+//        item = ProductItem(
+//            id = "kimo",
+//            name = "Chocolate Cake",
+//            price = "Rp 25.000",
+//            imageRes = R.drawable.kopi // ganti sesuai drawable kamu
+//        ),
+//        onAddToCart = {}
+//    )
+//}
+
+
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun MerchantProductPreview() {
@@ -474,7 +529,8 @@ fun MerchantProductPreview() {
         merchantId = "kimo",
         onBackClick = {},
         onAddToCart = { /* no-op */ },
-        onOpenShoppingList = { /* no-op */ }
+        onOpenShoppingList = { /* no-op */ },
+        navController = rememberNavController()
     )
 }
 
