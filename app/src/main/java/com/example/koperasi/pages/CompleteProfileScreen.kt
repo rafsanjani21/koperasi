@@ -1,22 +1,34 @@
 package com.example.koperasi.pages
 
 import android.Manifest
+import com.example.koperasi.R
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.koperasi.data.RegisterRepository
@@ -224,198 +236,360 @@ fun CompleteProfileScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
-        Text("Complete Profile", style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(12.dp))
+        Text("User Data",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally),
+            fontSize = 18.sp,
+            color = Color(0xFF4461AD),
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(Modifier
+            .height(12.dp))
 
         // KTP preview
-        Text("Gambar KTP yang sudah di-scan (WAJIB)", style = MaterialTheme.typography.labelLarge)
-        Spacer(Modifier.height(8.dp))
-        if (form.ktpImageUri != null) {
-            Image(
-                painter = rememberAsyncImagePainter(form.ktpImageUri),
-                contentDescription = "KTP Image",
-                modifier = Modifier.fillMaxWidth().height(180.dp)
-            )
-        } else {
-            Text("Belum ada gambar KTP.")
-        }
-        Spacer(Modifier.height(8.dp))
-        Button(
-            onClick = { requestCameraForKtp.launch(Manifest.permission.CAMERA) },
-            enabled = !loadingOcr && !loadingSubmit,
-            modifier = Modifier.fillMaxWidth()
-        ) { Text("Scan KTP") }
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(2.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
 
-        if (loadingOcr) {
-            Spacer(Modifier.height(10.dp))
-            CircularProgressIndicator()
+                Text(
+                    "Kartu Tanda Penduduk",
+                    style = MaterialTheme.typography.labelLarge
+                )
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clickable(
+                            enabled = !loadingOcr && !loadingSubmit
+                        ) {
+                            requestCameraForKtp.launch(Manifest.permission.CAMERA)
+                        },
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                    )
+                ) {
+
+                    Box(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+
+                        // ===== Background KTP Image =====
+                        Image(
+                            painter = if (form.ktpImageUri != null)
+                                rememberAsyncImagePainter(form.ktpImageUri)
+                            else
+                                painterResource(R.drawable.ktp_placeholder), // gambar KTP full
+                            contentDescription = "KTP",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+
+                        // ===== Overlay Center Text =====
+                        if (form.ktpImageUri == null) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.White.copy(alpha = 0.9f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    "Scan KTP",
+                                    color = Color.Black,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
+                        }
+
+                        // ===== Loading OCR =====
+                        if (loadingOcr) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.Black.copy(alpha = 0.3f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(color = Color.White)
+                            }
+                        }
+                    }
+                }
+            }
         }
+
 
         Spacer(Modifier.height(14.dp))
 
-        // NIK
-        OutlinedTextField(
-            value = form.nik,
-            onValueChange = { form = form.copy(nik = it.filter { ch -> ch.isDigit() }) },
-            label = { Text("NIK") },
+// Informasi User
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true
-        )
-        Spacer(Modifier.height(10.dp))
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(2.dp)
+        ){
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    "Informasi User",
+                    style = MaterialTheme.typography.labelLarge
+                )
+                Spacer(Modifier.height(8.dp))
+                val labelStyle = MaterialTheme.typography.labelMedium.copy(
+                    color = Color.Black
+                )
 
-        // Nama
-        OutlinedTextField(
-            value = form.nama,
-            onValueChange = { form = form.copy(nama = it) },
-            label = { Text("Nama") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-        Spacer(Modifier.height(10.dp))
+                val fieldShape = RoundedCornerShape(8.dp)
+                // NIK
+                Text("NIK", style = labelStyle)
+                Spacer(Modifier.height(4.dp))
 
-        // No HP wajib 0
-        OutlinedTextField(
-            value = form.noHp,
-            onValueChange = { raw ->
-                val digitsOnly = raw.filter { it.isDigit() }
-                form = form.copy(noHp = digitsOnly)
-            },
-            label = { Text("Nomor HP (wajib diawali 0)") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-            singleLine = true,
-            isError = form.noHp.isNotBlank() && !form.noHp.startsWith("0"),
-            supportingText = {
-                if (form.noHp.isNotBlank() && !form.noHp.startsWith("0")) {
-                    Text("Nomor HP harus diawali 0 (contoh: 08123456789)")
+                OutlinedTextField(
+                    value = form.nik,
+                    onValueChange = { form = form.copy(nik = it.filter { ch -> ch.isDigit() }) },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    shape = fieldShape,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.LightGray,
+                        unfocusedBorderColor = Color.LightGray,
+                        focusedLabelColor = Color.Transparent,
+                        unfocusedLabelColor = Color.Transparent
+                    )
+                )
+                Spacer(Modifier.height(10.dp))
+
+                // Nama
+                Text("Nama", style = labelStyle)
+                Spacer(Modifier.height(4.dp))
+
+                OutlinedTextField(
+                    value = form.nama,
+                    onValueChange = { form = form.copy(nama = it) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = fieldShape,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.LightGray,
+                        unfocusedBorderColor = Color.LightGray,
+                        focusedLabelColor = Color.Transparent,
+                        unfocusedLabelColor = Color.Transparent
+                    )
+                )
+                Spacer(Modifier.height(10.dp))
+
+                // No HP wajib 0
+                Text("Nomor HP (wajib diawali 0)", style = labelStyle)
+                Spacer(Modifier.height(4.dp))
+
+                OutlinedTextField(
+                    value = form.noHp,
+                    onValueChange = { raw ->
+                        val digitsOnly = raw.filter { it.isDigit() }
+                        form = form.copy(noHp = digitsOnly)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    singleLine = true,
+                    shape = fieldShape,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.LightGray,
+                        unfocusedBorderColor = Color.LightGray,
+                        focusedLabelColor = Color.Transparent,
+                        unfocusedLabelColor = Color.Transparent
+                    ),
+                    isError = form.noHp.isNotBlank() && !form.noHp.startsWith("0"),
+                    supportingText = {
+                        if (form.noHp.isNotBlank() && !form.noHp.startsWith("0")) {
+                            Text("Nomor HP harus diawali 0 (contoh: 08123456789)")
+                        }
+                    }
+                )
+                Spacer(Modifier.height(10.dp))
+
+                // NPWP opsional
+                Text("NPWP (Opsional)", style = labelStyle)
+                Spacer(Modifier.height(4.dp))
+
+                OutlinedTextField(
+                    value = form.npwp,
+                    onValueChange = { raw ->
+                        val digitsOnly = raw.filter { it.isDigit() }
+                        form = form.copy(npwp = digitsOnly)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = fieldShape,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.LightGray,
+                        unfocusedBorderColor = Color.LightGray,
+                        focusedLabelColor = Color.Transparent,
+                        unfocusedLabelColor = Color.Transparent
+                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
+                Spacer(Modifier.height(10.dp))
+
+                // Tempat lahir
+                Text("Tempat Lahir", style = labelStyle)
+                Spacer(Modifier.height(4.dp))
+
+                PlaceOfBirthDropdown(
+                    label = "Tempat Lahir (Kab/Kota)",
+                    value = form.tempatLahirKabKota,
+                    provinces = wBirth.provinces,
+                    regencies = wBirth.regencies,
+                    loading = wBirth.loading,
+                    enabled = wBirth.provinces.isNotEmpty(),
+                    onPickProvince = { provinceCode -> birthVm.selectProvince(provinceCode) },
+                    onPickRegency = { regencyName ->
+                        form = form.copy(tempatLahirKabKota = regencyName)
+                    }
+                )
+
+                // Tanggal lahir
+                Text("Tanggal Lahir", style = labelStyle)
+                Spacer(Modifier.height(4.dp))
+                DatePickerField(
+                    label = "Tanggal Lahir",
+                    value = form.tglLahir,
+                    onDateSelected = { picked -> form = form.copy(tglLahir = picked) }
+                )
+
+                // Jenis kelamin
+                Text("Jenis Kelamin", style = labelStyle)
+                Spacer(Modifier.height(4.dp))
+                SimpleDropdownOption(
+                    label = "Jenis Kelamin",
+                    selectedValue = form.jenisKelamin,
+                    options = jenisKelaminOptions,
+                    enabled = true,
+                    onSelected = { opt -> form = form.copy(jenisKelamin = opt.value) }
+                )
+
+                Spacer(Modifier.height(6.dp))
+                Text("Alamat (Wilayah)", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(10.dp))
+
+                // Provinsi
+                SimpleDropdown(
+                    label = "Provinsi",
+                    value = form.provinsi,
+                    options = wAddr.provinces.map { it.name },
+                    enabled = wAddr.provinces.isNotEmpty(),
+                    onSelected = { pickedName ->
+                        val picked = wAddr.provinces.first { it.name == pickedName }
+                        form = form.copy(
+                            provinsi = picked.name,
+                            kabupaten = "",
+                            kecamatan = "",
+                            kelurahan = ""
+                        )
+                        addrProvinceCode = picked.code
+                        addrRegencyCode = ""
+                        addrDistrictCode = ""
+                        addrVm.selectProvince(picked.code)
+                    }
+                )
+
+                // Kabupaten/Kota
+                SimpleDropdown(
+                    label = "Kabupaten/Kota",
+                    value = form.kabupaten,
+                    options = wAddr.regencies.map { it.name },
+                    enabled = addrProvinceCode.isNotBlank() && wAddr.regencies.isNotEmpty(),
+                    onSelected = { pickedName ->
+                        val picked = wAddr.regencies.first { it.name == pickedName }
+                        form = form.copy(kabupaten = picked.name, kecamatan = "", kelurahan = "")
+                        addrRegencyCode = picked.code
+                        addrDistrictCode = ""
+                        addrVm.selectRegency(picked.code)
+                    }
+                )
+
+                // Kecamatan
+                SimpleDropdown(
+                    label = "Kecamatan",
+                    value = form.kecamatan,
+                    options = wAddr.districts.map { it.name },
+                    enabled = addrRegencyCode.isNotBlank() && wAddr.districts.isNotEmpty(),
+                    onSelected = { pickedName ->
+                        val picked = wAddr.districts.first { it.name == pickedName }
+                        form = form.copy(kecamatan = picked.name, kelurahan = "")
+                        addrDistrictCode = picked.code
+                        addrVm.selectDistrict(picked.code)
+                    }
+                )
+
+                // Kelurahan/Desa
+                SimpleDropdown(
+                    label = "Kelurahan/Desa",
+                    value = form.kelurahan,
+                    options = wAddr.villages.map { it.name },
+                    enabled = addrDistrictCode.isNotBlank() && wAddr.villages.isNotEmpty(),
+                    onSelected = { pickedName -> form = form.copy(kelurahan = pickedName) }
+                )
+
+                // RT/RW
+                SimpleDropdown("RT", form.rt, rtOptions, enabled = true) {
+                    form = form.copy(rt = it)
                 }
-            }
-        )
-        Spacer(Modifier.height(10.dp))
+                SimpleDropdown("RW", form.rw, rwOptions, enabled = true) {
+                    form = form.copy(rw = it)
+                }
 
-        // NPWP opsional
-        OutlinedTextField(
-            value = form.npwp,
-            onValueChange = { raw ->
-                val digitsOnly = raw.filter { it.isDigit() }
-                form = form.copy(npwp = digitsOnly)
-            },
-            label = { Text("NPWP (Opsional)") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            singleLine = true
-        )
-        Spacer(Modifier.height(10.dp))
+                // alamat detail
+                Text("Alamat (Detail)", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(4.dp))
 
-        // Tempat lahir
-        PlaceOfBirthDropdown(
-            label = "Tempat Lahir (Kab/Kota)",
-            value = form.tempatLahirKabKota,
-            provinces = wBirth.provinces,
-            regencies = wBirth.regencies,
-            loading = wBirth.loading,
-            enabled = wBirth.provinces.isNotEmpty(),
-            onPickProvince = { provinceCode -> birthVm.selectProvince(provinceCode) },
-            onPickRegency = { regencyName -> form = form.copy(tempatLahirKabKota = regencyName) }
-        )
+                OutlinedTextField(
+                    value = form.alamat,
+                    onValueChange = { form = form.copy(alamat = it) },
+                    singleLine = false,
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2
+                )
+                Spacer(Modifier.height(10.dp))
 
-        // Tanggal lahir
-        DatePickerField(
-            label = "Tanggal Lahir",
-            value = form.tglLahir,
-            onDateSelected = { picked -> form = form.copy(tglLahir = picked) }
-        )
+                // lain-lain
+                SimpleDropdown("Agama", form.agama, agamaOptions, enabled = true) {
+                    form = form.copy(agama = it)
+                }
+                SimpleDropdown(
+                    "Status Perkawinan",
+                    form.statusPerkawinan,
+                    statusOptions,
+                    enabled = true
+                ) { form = form.copy(statusPerkawinan = it) }
+                SimpleDropdown(
+                    "Pekerjaan",
+                    form.pekerjaan,
+                    pekerjaanOptions,
+                    enabled = true
+                ) { form = form.copy(pekerjaan = it) }
+                SimpleDropdown(
+                    "Kewarganegaraan",
+                    form.kewarganegaraan,
+                    kewarganegaraanOptions,
+                    enabled = true
+                ) { form = form.copy(kewarganegaraan = it) }
 
-        // Jenis kelamin
-        SimpleDropdownOption(
-            label = "Jenis Kelamin",
-            selectedValue = form.jenisKelamin,
-            options = jenisKelaminOptions,
-            enabled = true,
-            onSelected = { opt -> form = form.copy(jenisKelamin = opt.value) }
-        )
+                Spacer(Modifier.height(18.dp))
 
-        Spacer(Modifier.height(6.dp))
-        Text("Alamat (Wilayah)", style = MaterialTheme.typography.labelLarge)
-        Spacer(Modifier.height(10.dp))
+        }
 
-        // Provinsi
-        SimpleDropdown(
-            label = "Provinsi",
-            value = form.provinsi,
-            options = wAddr.provinces.map { it.name },
-            enabled = wAddr.provinces.isNotEmpty(),
-            onSelected = { pickedName ->
-                val picked = wAddr.provinces.first { it.name == pickedName }
-                form = form.copy(provinsi = picked.name, kabupaten = "", kecamatan = "", kelurahan = "")
-                addrProvinceCode = picked.code
-                addrRegencyCode = ""
-                addrDistrictCode = ""
-                addrVm.selectProvince(picked.code)
-            }
-        )
-
-        // Kabupaten/Kota
-        SimpleDropdown(
-            label = "Kabupaten/Kota",
-            value = form.kabupaten,
-            options = wAddr.regencies.map { it.name },
-            enabled = addrProvinceCode.isNotBlank() && wAddr.regencies.isNotEmpty(),
-            onSelected = { pickedName ->
-                val picked = wAddr.regencies.first { it.name == pickedName }
-                form = form.copy(kabupaten = picked.name, kecamatan = "", kelurahan = "")
-                addrRegencyCode = picked.code
-                addrDistrictCode = ""
-                addrVm.selectRegency(picked.code)
-            }
-        )
-
-        // Kecamatan
-        SimpleDropdown(
-            label = "Kecamatan",
-            value = form.kecamatan,
-            options = wAddr.districts.map { it.name },
-            enabled = addrRegencyCode.isNotBlank() && wAddr.districts.isNotEmpty(),
-            onSelected = { pickedName ->
-                val picked = wAddr.districts.first { it.name == pickedName }
-                form = form.copy(kecamatan = picked.name, kelurahan = "")
-                addrDistrictCode = picked.code
-                addrVm.selectDistrict(picked.code)
-            }
-        )
-
-        // Kelurahan/Desa
-        SimpleDropdown(
-            label = "Kelurahan/Desa",
-            value = form.kelurahan,
-            options = wAddr.villages.map { it.name },
-            enabled = addrDistrictCode.isNotBlank() && wAddr.villages.isNotEmpty(),
-            onSelected = { pickedName -> form = form.copy(kelurahan = pickedName) }
-        )
-
-        // RT/RW
-        SimpleDropdown("RT", form.rt, rtOptions, enabled = true) { form = form.copy(rt = it) }
-        SimpleDropdown("RW", form.rw, rwOptions, enabled = true) { form = form.copy(rw = it) }
-
-        // alamat detail
-        OutlinedTextField(
-            value = form.alamat,
-            onValueChange = { form = form.copy(alamat = it) },
-            label = { Text("Alamat (Detail)") },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 2
-        )
-        Spacer(Modifier.height(10.dp))
-
-        // lain-lain
-        SimpleDropdown("Agama", form.agama, agamaOptions, enabled = true) { form = form.copy(agama = it) }
-        SimpleDropdown("Status Perkawinan", form.statusPerkawinan, statusOptions, enabled = true) { form = form.copy(statusPerkawinan = it) }
-        SimpleDropdown("Pekerjaan", form.pekerjaan, pekerjaanOptions, enabled = true) { form = form.copy(pekerjaan = it) }
-        SimpleDropdown("Kewarganegaraan", form.kewarganegaraan, kewarganegaraanOptions, enabled = true) { form = form.copy(kewarganegaraan = it) }
-
-        Spacer(Modifier.height(18.dp))
-
+    }
         // foto profil
         Text("Foto Profil (WAJIB)", style = MaterialTheme.typography.labelLarge)
         Spacer(Modifier.height(8.dp))
@@ -492,6 +666,7 @@ fun CompleteProfileScreen(
         Spacer(Modifier.height(24.dp))
     }
 }
+
 
 /* -------------------- UI components -------------------- */
 
@@ -638,4 +813,39 @@ private fun formatDateDdMmYyyy(millis: Long): String {
     val month = (cal.get(Calendar.MONTH) + 1).toString().padStart(2, '0')
     val year = cal.get(Calendar.YEAR).toString()
     return "$day-$month-$year"
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun CompleteProfileScreenPreview() {
+    MaterialTheme {
+        CompleteProfileScreen(
+            initial = CompleteProfileForm(
+                nik = "3276010101010001",
+                nama = "Supardjo",
+                noHp = "081234567890",
+                tempatLahirKabKota = "KOTA BANDUNG",
+                tglLahir = "01-01-1990",
+                jenisKelamin = "L",
+                provinsi = "JAWA BARAT",
+                kabupaten = "KOTA BANDUNG",
+                kecamatan = "COBLONG",
+                kelurahan = "DAGO",
+                alamat = "Jl. Contoh No. 123",
+                agama = "ISLAM",
+                statusPerkawinan = "KAWIN",
+                pekerjaan = "KARYAWAN",
+                kewarganegaraan = "WNI",
+                rt = "001",
+                rw = "002"
+            ),
+            idTokenProvider = {
+                // mock token untuk preview
+                "dummy-token"
+            },
+            onSuccess = {
+                // tidak melakukan apa-apa di preview
+            }
+        )
+    }
 }

@@ -168,9 +168,9 @@ fun NavigationBottomBar(
                 route = "Daftar"
             ),
             BottomBarItem(
-                icon = R.drawable.tanggal_icon,
-                name = "Tanggal",
-                route = "Tanggal"
+                icon = R.drawable.promo,
+                name = "Promo",
+                route = "Promo"
             ),
             BottomBarItem(
                 icon = R.drawable.akun_icon,
@@ -208,7 +208,8 @@ fun NavigationBottomBar(
                     Icon(
                         painterResource(item.icon),
                         contentDescription = item.name,
-                        modifier = modifier.size(24.dp)
+                        modifier = modifier.size(24.dp),
+                        tint = Color.Unspecified
                     )},
                 label = {
                     when(selectedItem == index){
