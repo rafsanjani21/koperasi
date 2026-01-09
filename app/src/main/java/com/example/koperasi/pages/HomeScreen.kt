@@ -244,37 +244,52 @@ private fun HomeHeader(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
+
                 Row(
-                    modifier = Modifier.width(204.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    AppShortcutItem("Gerai Mart", R.drawable.gerai_mart_logo) {
-                        navController.navigate("geraimart")
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        AppShortcutItem("Gerai Mart", R.drawable.gerai_mart_logo) {
+                            navController.navigate("geraimart")
+                        }
                     }
-                    AppShortcutItem("Gerai Agro", R.drawable.gerai_argo_logo) {
-                        navController.navigate("geraiagro")
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        AppShortcutItem("Gerai Agro", R.drawable.gerai_argo_logo) {
+                            navController.navigate("geraiagro")
+                        }
                     }
-                    AppShortcutItem("Gerai Niaga", R.drawable.gerai_niaga_logo) {
-                        navController.navigate("gerainiaga")
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        AppShortcutItem("Gerai Niaga", R.drawable.gerai_niaga_logo) {
+                            navController.navigate("gerainiaga")
+                        }
                     }
                 }
 
-                Spacer(Modifier.height(4.dp))
+
+                Spacer(Modifier.height(0.dp))
 
                 Row(
-                    modifier = Modifier.width(204.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    AppShortcutItem("Gerai Digital", R.drawable.gerai_digital_logo) {
-                        navController.navigate("geraidigital")
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        AppShortcutItem("Gerai Digital", R.drawable.gerai_digital_logo) {
+                            navController.navigate("geraidigital")
+                        }
                     }
-                    AppShortcutItem("Spin Reward", R.drawable.spin_reward_logo) {
-                        navController.navigate("spinreward")
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        AppShortcutItem("Spin Reward", R.drawable.spin_reward_logo) {
+                            navController.navigate("spinreward")
+                        }
                     }
-                    AppShortcutItem("More", R.drawable.more_logo) {
-                        navController.navigate("more")
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        AppShortcutItem("More", R.drawable.more_logo) {
+                            navController.navigate("more")
+                        }
                     }
                 }
+
             }
         }
     }
