@@ -209,7 +209,7 @@ fun NavigationBottomBar(
                         painterResource(item.icon),
                         contentDescription = item.name,
                         modifier = modifier.size(24.dp),
-                        tint = Color.Unspecified
+                        tint = if (selectedItem == index) Color(0xFF4461AD) else Color.Unspecified
                     )},
                 label = {
                     when(selectedItem == index){
