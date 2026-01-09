@@ -44,8 +44,8 @@ sealed class BottomNavItem(
     val iconRes: Int
 ) {
     data object Menu : BottomNavItem("home", "Menu", R.drawable.menu)
-    data object Daftar : BottomNavItem("daftar", "Daftar", R.drawable.daftar)
-    data object Tanggal : BottomNavItem("tanggal", "Tanggal", R.drawable.tanggal)
+    data object Transaksi : BottomNavItem("transaksi", "Transaksi", R.drawable.daftar)
+    data object Promo : BottomNavItem("promo", "Promo", R.drawable.promo)
     data object Profil : BottomNavItem("profil", "Profil", R.drawable.profil)
 }
 
@@ -58,8 +58,8 @@ fun MainBottomNavScreen(
 
     val items = listOf(
         BottomNavItem.Menu,
-        BottomNavItem.Daftar,
-        BottomNavItem.Tanggal,
+        BottomNavItem.Transaksi,
+        BottomNavItem.Promo,
         BottomNavItem.Profil
     )
 
@@ -81,8 +81,8 @@ fun MainBottomNavScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
 
-            composable(BottomNavItem.Daftar.route) { SimplePage("Halaman Daftar") }
-            composable(BottomNavItem.Tanggal.route) { SimplePage("Halaman Tanggal") }
+            composable(BottomNavItem.Transaksi.route) { SimplePage("Halaman Daftar") }
+            composable(BottomNavItem.Promo.route) { SimplePage("Halaman Tanggal") }
             composable(BottomNavItem.Profil.route) { UserProfileScreen() }
 
             composable(BottomNavItem.Menu.route) {
