@@ -7,7 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
 
-    private const val BASE_URL = "http://192.168.52.29:8080/"
+    private const val BASE_URL = "http://192.168.52.30:8080/"
 
     // Logging interceptor untuk melihat request/response di Logcat
     private val loggingInterceptor: HttpLoggingInterceptor by lazy {

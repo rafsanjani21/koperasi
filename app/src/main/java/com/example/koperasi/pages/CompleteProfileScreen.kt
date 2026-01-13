@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -20,6 +21,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -40,6 +42,8 @@ import com.example.koperasi.wilayah.*
 import com.example.koperasi.wilayah.db.WilayahDb
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import com.google.firebase.auth.FirebaseAuth
+
 
 data class Option(val label: String, val value: String)
 
@@ -49,13 +53,12 @@ data class CompleteProfileForm(
 
     val nik: String = "",
     val nama: String = "",
+    val email: String = "",   // ⬅️ dari Firebase, bukan input
     val noHp: String = "",
     val npwp: String = "",
 
     val tempatLahirKabKota: String = "",
     val tglLahir: String = "",
-
-    // simpan value: "L" / "P"
     val jenisKelamin: String = "",
 
     val provinsi: String = "",
@@ -72,10 +75,15 @@ data class CompleteProfileForm(
     val pekerjaan: String = "",
     val kewarganegaraan: String = "",
 
-    // backend butuh (kalau tidak ada input, bisa auto)
-    val registerLocation: String = "",
+    val bloodType: String = "",
+    val lastEducation: String = "",
+    val activeAs: String = "",
+    val motherName: String = "",
+
+    val registerLocation: String = "ANDROID_APP",
     val registerId: String = ""
 )
+
 
 @Composable
 fun CompleteProfileScreen(
@@ -116,6 +124,16 @@ fun CompleteProfileScreen(
     val wAddr by addrVm.ui.collectAsState()
 
     var form by remember { mutableStateOf(initial) }
+    val firebaseUser = remember {
+        FirebaseAuth.getInstance().currentUser
+    }
+
+    LaunchedEffect(firebaseUser) {
+        firebaseUser?.email?.let { email ->
+            form = form.copy(email = email)
+        }
+    }
+
 
     var loadingOcr by remember { mutableStateOf(false) }
     var loadingSubmit by remember { mutableStateOf(false) }
@@ -125,6 +143,9 @@ fun CompleteProfileScreen(
 
     // validasi hp wajib 0
     val hpValid = remember(form.noHp) { form.noHp.isNotBlank() && form.noHp.startsWith("0") }
+    val emailValid = remember(form.email) {
+        form.email.isNotBlank() && form.email.contains("@")
+    }
 
     LaunchedEffect(Unit) {
         birthVm.loadProvinces()
@@ -216,7 +237,8 @@ fun CompleteProfileScreen(
     }
 
     // ====== button enabled rules ======
-    val canSubmit = hpValid &&
+    val canSubmit = emailValid &&      // ⬅️ WAJIB ADA
+            hpValid &&
             form.ktpImageUri != null &&
             form.profilePhotoUri != null &&
             form.nik.trim().isNotEmpty() &&
@@ -228,6 +250,7 @@ fun CompleteProfileScreen(
             form.kabupaten.isNotBlank() &&
             form.kecamatan.isNotBlank() &&
             form.kelurahan.isNotBlank()
+
 
     // ====== UI ======
     Column(
@@ -590,33 +613,74 @@ fun CompleteProfileScreen(
         }
 
     }
-        // foto profil
-        Text("Foto Profil (WAJIB)", style = MaterialTheme.typography.labelLarge)
-        Spacer(Modifier.height(8.dp))
-        if (form.profilePhotoUri != null) {
-            Image(
-                painter = rememberAsyncImagePainter(form.profilePhotoUri),
-                contentDescription = "Profile Photo",
-                modifier = Modifier.fillMaxWidth().height(180.dp)
-            )
-        } else {
-            Text("Belum ada foto profil.")
+        Spacer(Modifier.height(18.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            elevation = CardDefaults.cardElevation(1.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+
+                // Title
+                Text(
+                    text = "Foto Profile",
+                    style = MaterialTheme.typography.labelLarge
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                // Foto area
+                Box(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(
+                            width = 1.dp,
+                            color = Color(0xFFE0E0E0),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .clickable(
+                            enabled = !loadingSubmit
+                        ) {
+                            requestCameraForProfile.launch(Manifest.permission.CAMERA)
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    if (form.profilePhotoUri != null) {
+                        Image(
+                            painter = rememberAsyncImagePainter(form.profilePhotoUri),
+                            contentDescription = "Profile Photo",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(R.drawable.regisprofile),
+                            contentDescription = "Placeholder",
+                            modifier = Modifier
+                                .size(72.dp)
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    text = "Klik untuk upload foto",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray
+                )
+            }
         }
 
-        Spacer(Modifier.height(8.dp))
-        Button(
-            onClick = { requestCameraForProfile.launch(Manifest.permission.CAMERA) },
-            enabled = !loadingSubmit,
-            modifier = Modifier.fillMaxWidth()
-        ) { Text("Ambil Foto Profil") }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(20.dp))
 
-        errorMsg?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        successMsg?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
-
-        Spacer(Modifier.height(10.dp))
-
+        // ===== BUTTON LANJUT =====
         Button(
             onClick = {
                 scope.launch {
@@ -662,8 +726,6 @@ fun CompleteProfileScreen(
                 Text("Simpan")
             }
         }
-
-        Spacer(Modifier.height(24.dp))
     }
 }
 
