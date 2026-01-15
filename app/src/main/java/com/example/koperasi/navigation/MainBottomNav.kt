@@ -35,6 +35,7 @@ import com.example.koperasi.pages.MerchantProductScreen
 import com.example.koperasi.pages.UserProfileScreen
 import com.example.koperasi.pages.PaymentMethodScreen
 import com.example.koperasi.pages.ShoppingListScreen
+import com.example.koperasi.pages.geraidigital.GeraiDigitalScreen
 import com.example.koperasi.pages.geraimart.GeraiMartScreen
 
 
@@ -127,6 +128,12 @@ fun MainBottomNavScreen(
                     },
                     onOpenShoppingList = { navController.navigate("shopping_list") },
                     navController = navController
+                )
+            }
+
+            composable("geraidigital") {
+                GeraiDigitalScreen(
+                    onBackClick = { navController.popBackStack() },
                 )
             }
 
