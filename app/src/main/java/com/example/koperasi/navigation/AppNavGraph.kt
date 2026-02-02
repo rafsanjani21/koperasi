@@ -28,7 +28,9 @@ fun AppNavGraph(
 ) {
     NavHost(navController = navController, startDestination = startDestination) {
 
-        composable("splash") { SplashScreen(navController, isLoggedIn) }
+        composable("splash") {
+            SplashScreen(navController, isLoggedIn)
+        }
 
         composable("login") {
             LoginScreen(
@@ -37,9 +39,12 @@ fun AppNavGraph(
             )
         }
 
+
         composable("register") {
             val infoMessage =
-                navController.currentBackStackEntry?.savedStateHandle?.get<String>("info") ?: ""
+                navController.currentBackStackEntry
+                    ?.savedStateHandle
+                    ?.get<String>("info") ?: ""
 
             RegisterScreen(
                 infoMessage = infoMessage,
@@ -48,40 +53,39 @@ fun AppNavGraph(
             )
         }
 
-        // Kode yang benar
         composable("complete_profile") {
             CompleteProfileScreen(
                 idTokenProvider = {
                     tokenManager.getIdToken()
-                        ?: throw IllegalStateException("ID Token kosong. Silakan login ulang.")
+                        ?: error("ID Token kosong. Login ulang.")
                 },
                 onSuccess = {
-                    navController.navigate("home") {
+                    navController.navigate("login") {
                         popUpTo("complete_profile") { inclusive = true }
-                        launchSingleTop = true
                     }
                 }
             )
         }
 
         composable("home") {
-            val authRepo = remember { AuthRepository(ApiClient.api, tokenManager) }
+            val authRepo = remember {
+                AuthRepository(ApiClient.api, tokenManager)
+            }
 
             LaunchedEffect(Unit) {
                 while (true) {
-                    delay(5_000)
+                    delay(60_000)
                     if (tokenManager.isAccessTokenAlmostExpired(5)) {
-                        val ok = authRepo.refreshTokens()
-                        Log.d("AUTO_REFRESH", "auto refresh: $ok")
+                        authRepo.refreshTokens()
                     }
                 }
             }
 
-            // ✅ semua navigasi merchant/shopping/payment ada di dalam MainBottomNavScreen
             MainBottomNavScreen(
                 onLogoutSuccess = onLogout
             )
         }
     }
 }
+
 

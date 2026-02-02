@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.compose.remote.creation.core)
 
     // 🔹 Tambahin ini buat Preview
     debugImplementation(libs.androidx.compose.ui.tooling)
@@ -108,6 +109,9 @@ dependencies {
 
     // Foundation
     implementation("androidx.compose.foundation:foundation:1.6.0")
+
+    // Location
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 }
 
 

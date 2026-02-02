@@ -8,8 +8,8 @@ data class LoginRequest(
     @SerializedName("id_token")
     val idToken: String,
 
-    @SerializedName("device_info")
-    val deviceInfo: String
+    @SerializedName("location")
+    val location: String
 )
 
 // =============== RESPONSES ===============
@@ -31,6 +31,9 @@ data class LoginResponse(
 data class RefreshResponse(
     @SerializedName("access_token")
     val accessToken: String,
+
+    @SerializedName("token_hash")
+    val tokenHash: String,
 
     @SerializedName("refresh_token")
     val refreshToken: String
@@ -61,4 +64,9 @@ data class UserData(
 
     @SerializedName("IsLoggedIn")
     val isLoggedIn: Int
+)
+
+data class LogoutRequest(
+    @SerializedName("token_hash")
+    val tokenHash: String
 )

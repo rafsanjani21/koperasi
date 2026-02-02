@@ -18,16 +18,20 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
+import androidx.compose.remote.creation.second
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,6 +47,8 @@ import com.example.koperasi.wilayah.db.WilayahDb
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import com.google.firebase.auth.FirebaseAuth
+import android.widget.Toast
+
 
 
 data class Option(val label: String, val value: String)
@@ -53,7 +59,7 @@ data class CompleteProfileForm(
 
     val nik: String = "",
     val nama: String = "",
-    val email: String = "",   // ⬅️ dari Firebase, bukan input
+    val email: String = "",
     val noHp: String = "",
     val npwp: String = "",
 
@@ -68,23 +74,26 @@ data class CompleteProfileForm(
 
     val rt: String = "",
     val rw: String = "",
+    val kodePos: String = "",
 
     val alamat: String = "",
     val agama: String = "",
     val statusPerkawinan: String = "",
+
+    // 🔥 BACKEND REQUIRED
     val pekerjaan: String = "",
     val kewarganegaraan: String = "",
-
     val bloodType: String = "",
     val lastEducation: String = "",
-    val activeAs: String = "",
     val motherName: String = "",
 
+    val activeAs: String = "ANGGOTA",
     val registerLocation: String = "ANDROID_APP",
     val registerId: String = ""
 )
 
 
+// SCREEN
 @Composable
 fun CompleteProfileScreen(
     initial: CompleteProfileForm = CompleteProfileForm(),
@@ -93,6 +102,67 @@ fun CompleteProfileScreen(
 ) {
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
+    val fieldPositions = remember { mutableStateMapOf<String, Float>() }
+    val errorFields = remember { mutableStateListOf<String>() }
+
+    var form by remember { mutableStateOf(initial) }
+
+    fun Modifier.trackField(key: String) = this.onGloballyPositioned {
+        fieldPositions[key] = it.positionInParent().y
+    }
+
+    fun isError(key: String) = errorFields.contains(key)
+
+    fun validateAndScroll(): Boolean {
+        errorFields.clear()
+
+        val validations = listOf(
+            Triple("nik", form.nik.length != 16, "NIK harus tepat 16 digit"),
+            Triple("nama", form.nama.isBlank(), "Nama wajib diisi"),
+            Triple(
+                "noHp",
+                form.noHp.length < 11 || form.noHp.length > 13,
+                "Nomor HP harus 11–13 digit"
+            ),
+            Triple("motherName", form.motherName.isBlank(), "Nama ibu wajib diisi"),
+            Triple("tempatLahirKabKota", form.tempatLahirKabKota.isBlank(), "Tempat lahir wajib"),
+            Triple("tglLahir", form.tglLahir.isBlank(), "Tanggal lahir wajib"),
+            Triple("jenisKelamin", form.jenisKelamin.isBlank(), "Jenis kelamin wajib"),
+            Triple("provinsi", form.provinsi.isBlank(), "Provinsi wajib"),
+            Triple("kabupaten", form.kabupaten.isBlank(), "Kabupaten wajib"),
+            Triple("kecamatan", form.kecamatan.isBlank(), "Kecamatan wajib"),
+            Triple("kelurahan", form.kelurahan.isBlank(), "Kelurahan wajib"),
+            Triple("alamat", form.alamat.isBlank(), "Alamat wajib"),
+            Triple("kodePos", form.kodePos.length != 5, "Kode pos harus 5 digit"),
+            Triple("agama", form.agama.isBlank(), "Agama wajib"),
+            Triple("statusPerkawinan", form.statusPerkawinan.isBlank(), "Status perkawinan wajib"),
+            Triple("pekerjaan", form.pekerjaan.isBlank(), "Pekerjaan wajib"),
+            Triple("kewarganegaraan", form.kewarganegaraan.isBlank(), "Kewarganegaraan wajib"),
+            Triple("ktp", form.ktpImageUri == null, "Foto KTP wajib"),
+            Triple("profile", form.profilePhotoUri == null, "Foto profil wajib")
+        )
+
+        validations
+            .filter { it.second }
+            .forEach { errorFields.add(it.first) }
+
+        val firstError = validations.firstOrNull { it.second }
+        if (firstError != null) {
+            fieldPositions[firstError.first]?.let { y ->
+                scope.launch {
+                    scrollState.animateScrollTo(y.toInt())
+                }
+            }
+            Toast.makeText(ctx, firstError.third, Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        return true
+    }
+
+
+
 
     // ✅ pakai RegisterRepository yang terpisah filenya
     // bikin repo dengan tokenManager
@@ -123,7 +193,6 @@ fun CompleteProfileScreen(
     )
     val wAddr by addrVm.ui.collectAsState()
 
-    var form by remember { mutableStateOf(initial) }
     val firebaseUser = remember {
         FirebaseAuth.getInstance().currentUser
     }
@@ -139,6 +208,8 @@ fun CompleteProfileScreen(
     var loadingSubmit by remember { mutableStateOf(false) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
     var successMsg by remember { mutableStateOf<String?>(null) }
+    var showErrorDialog by remember { mutableStateOf(false) }
+
 
 
     // validasi hp wajib 0
@@ -168,8 +239,54 @@ fun CompleteProfileScreen(
     val rwOptions = remember { (1..20).map { it.toString().padStart(3, '0') } }
     val agamaOptions = remember { listOf("ISLAM", "KRISTEN", "KATHOLIK", "HINDU", "BUDHA", "KONGHUCHU") }
     val statusOptions = remember { listOf("BELUM KAWIN", "KAWIN", "CERAI HIDUP", "CERAI MATI") }
-    val pekerjaanOptions = remember { listOf("PELAJAR/MAHASISWA", "KARYAWAN", "WIRASWASTA", "PNS", "LAINNYA") }
+    val pekerjaanOptions = remember { listOf("BELUM / TIDAK BEKERJA",
+        "PELAJAR / MAHASISWA",
+        "MENGURUS RUMAH TANGGA",
+        "PENSIUNAN",
+
+        "PEGAWAI NEGERI SIPIL (PNS)",
+        "TNI",
+        "POLRI",
+        "KARYAWAN SWASTA",
+        "KARYAWAN BUMN",
+        "KARYAWAN HONORER",
+
+        "WIRASWASTA",
+        "PEDAGANG",
+        "PENGUSAHA",
+        "BURUH",
+        "BURUH HARIAN LEPAS",
+        "BURUH TANI / PERKEBUNAN",
+        "PETANI",
+        "PETERNAK",
+        "NELAYAN",
+        "PEKEBUN",
+
+        "GURU",
+        "DOSEN",
+        "TENAGA PENGAJAR",
+        "TENAGA KESEHATAN",
+        "DOKTER",
+        "PERAWAT",
+        "BIDAN",
+        "APOTEKER",
+
+        "SOPIR",
+        "OJEK",
+        "KURIR",
+        "MEKANIK",
+        "TEKNISI",
+
+        "KARYAWAN LEPAS / FREELANCER",
+        "PEKERJA KREATIF",
+        "PROGRAMMER",
+        "DESAINER",
+        "CONTENT CREATOR",
+
+        "LAINNYA") }
     val kewarganegaraanOptions = remember { listOf("WNI", "WNA") }
+    val bloodTypeOptions = remember {listOf("A", "B", "AB", "O", "-")}
+    val educationOptions = remember {listOf("SD", "SMP", "SMA/SMK", "D1", "D2", "D3", "S1", "S2", "S3")}
 
     // ====== Launchers: KTP camera ======
     var ktpCaptureUri by remember { mutableStateOf<Uri?>(null) }
@@ -178,27 +295,41 @@ fun CompleteProfileScreen(
         ActivityResultContracts.TakePicture()
     ) { success ->
         val uri = ktpCaptureUri
-        if (success && uri != null) {
-            form = form.copy(ktpImageUri = uri)
+        if (!success || uri == null) return@rememberLauncherForActivityResult
 
-            scope.launch {
-                loadingOcr = true
-                errorMsg = null
-                try {
-                    val (nik, _) = scanNikFromUri(ctx, uri)
-                    if (nik != null) {
-                        form = form.copy(nik = nik)
-                    } else {
-                        errorMsg = "NIK tidak terdeteksi. Coba foto ulang (hindari silau, zoom 2x)."
-                    }
-                } catch (e: Exception) {
-                    errorMsg = "OCR gagal: ${e.message}"
-                } finally {
-                    loadingOcr = false
+        scope.launch {
+            loadingOcr = true
+            errorMsg = null
+
+            try {
+                val (nikDetected, _) = scanNikFromUri(ctx, uri)
+
+                if (!nikDetected.isNullOrBlank()) {
+                    // ✅ OCR MENEMUKAN NIK (bebas panjang)
+                    form = form.copy(
+                        ktpImageUri = uri,
+                        nik = nikDetected
+                    )
+
+                    errorFields.remove("ktp")
+                    errorFields.remove("nik")
+
+                } else {
+                    // ❌ TIDAK ADA NIK → FOTO DITOLAK
+                    errorMsg =
+                        "NIK tidak terdeteksi. Pastikan foto jelas, tidak silau, dan posisi KTP lurus."
+                    showErrorDialog = true
                 }
+
+            } catch (e: Exception) {
+                errorMsg = "OCR gagal: ${e.message}"
+                showErrorDialog = true
+            } finally {
+                loadingOcr = false
             }
         }
     }
+
 
     val requestCameraForKtp = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -211,6 +342,9 @@ fun CompleteProfileScreen(
             errorMsg = "Izin kamera ditolak."
         }
     }
+
+    // ====== Dialogs Popup ======
+    var showSuccessDialog by remember { mutableStateOf(false) }
 
     // ====== Launchers: Profile photo camera only ======
     var profileCaptureUri by remember { mutableStateOf<Uri?>(null) }
@@ -256,7 +390,7 @@ fun CompleteProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(16.dp)
     ) {
         Text("User Data",
@@ -291,6 +425,7 @@ fun CompleteProfileScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(180.dp)
+                        .trackField("ktp")
                         .clickable(
                             enabled = !loadingOcr && !loadingSubmit
                         ) {
@@ -379,18 +514,43 @@ fun CompleteProfileScreen(
 
                 OutlinedTextField(
                     value = form.nik,
-                    onValueChange = { form = form.copy(nik = it.filter { ch -> ch.isDigit() }) },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    onValueChange = { input ->
+                        // Ambil angka saja
+                        val digits = input.filter { it.isDigit() }
+
+                        // HARD LIMIT: tidak bisa lebih dari 16
+                        if (digits.length <= 16) {
+                            form = form.copy(nik = digits)
+
+                            // Jika tepat 16 → hapus error
+                            if (digits.length == 16) {
+                                errorFields.remove("nik")
+                            }
+                        }
+                    },
+                    label = { Text("NIK") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .trackField("nik"),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
                     singleLine = true,
-                    shape = fieldShape,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.LightGray,
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedLabelColor = Color.Transparent,
-                        unfocusedLabelColor = Color.Transparent
-                    )
+
+                    // 🔴 ERROR jika kurang / kosong
+                    isError = isError("nik") || (form.nik.isNotEmpty() && form.nik.length != 16),
+
+                    supportingText = {
+                        if (form.nik.isNotEmpty() && form.nik.length != 16) {
+                            Text(
+                                text = "NIK harus tepat 16 digit",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
                 )
+
+
                 Spacer(Modifier.height(10.dp))
 
                 // Nama
@@ -400,7 +560,10 @@ fun CompleteProfileScreen(
                 OutlinedTextField(
                     value = form.nama,
                     onValueChange = { form = form.copy(nama = it) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .trackField("nama"),
+                    isError = isError("nama"),
                     singleLine = true,
                     shape = fieldShape,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -418,24 +581,37 @@ fun CompleteProfileScreen(
 
                 OutlinedTextField(
                     value = form.noHp,
-                    onValueChange = { raw ->
-                        val digitsOnly = raw.filter { it.isDigit() }
-                        form = form.copy(noHp = digitsOnly)
+                    onValueChange = { input ->
+                        // Ambil angka saja
+                        var digits = input.filter { it.isDigit() }
+
+                        // Auto awali dengan 0
+                        if (digits.isNotEmpty() && !digits.startsWith("0")) {
+                            digits = "0$digits"
+                        }
+
+                        // Batasi maksimal 13 digit
+                        if (digits.length > 13) {
+                            digits = digits.take(13)
+                        }
+
+                        form = form.copy(noHp = digits)
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    singleLine = true,
-                    shape = fieldShape,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.LightGray,
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedLabelColor = Color.Transparent,
-                        unfocusedLabelColor = Color.Transparent
+                    label = { Text("No. HP") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .trackField("noHp"),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Phone
                     ),
-                    isError = form.noHp.isNotBlank() && !form.noHp.startsWith("0"),
+                    singleLine = true,
+                    isError = isError("noHp") || (form.noHp.isNotEmpty() && form.noHp.length < 11),
                     supportingText = {
-                        if (form.noHp.isNotBlank() && !form.noHp.startsWith("0")) {
-                            Text("Nomor HP harus diawali 0 (contoh: 08123456789)")
+                        if (form.noHp.isNotEmpty() && form.noHp.length < 11) {
+                            Text(
+                                text = "Nomor HP harus 11–13 angka",
+                                color = MaterialTheme.colorScheme.error
+                            )
                         }
                     }
                 )
@@ -464,6 +640,26 @@ fun CompleteProfileScreen(
                 )
                 Spacer(Modifier.height(10.dp))
 
+                // Nama Ibu Kandung
+                Text("Nama Ibu Kandung", style = labelStyle)
+                Spacer(Modifier.height(4.dp))
+
+                OutlinedTextField(
+                    value = form.motherName,
+                    onValueChange = { form = form.copy(motherName = it) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = fieldShape,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.LightGray,
+                        unfocusedBorderColor = Color.LightGray,
+                        focusedLabelColor = Color.Transparent,
+                        unfocusedLabelColor = Color.Transparent
+                    )
+                )
+                Spacer(Modifier.height(10.dp))
+
+
                 // Tempat lahir
                 Text("Tempat Lahir", style = labelStyle)
                 Spacer(Modifier.height(4.dp))
@@ -487,8 +683,11 @@ fun CompleteProfileScreen(
                 DatePickerField(
                     label = "Tanggal Lahir",
                     value = form.tglLahir,
-                    onDateSelected = { picked -> form = form.copy(tglLahir = picked) }
+                    isError = isError("tglLahir"),
+                    modifier = Modifier.trackField("tglLahir"),
+                    onDateSelected = { form = form.copy(tglLahir = it) }
                 )
+
 
                 // Jenis kelamin
                 Text("Jenis Kelamin", style = labelStyle)
@@ -511,6 +710,8 @@ fun CompleteProfileScreen(
                     value = form.provinsi,
                     options = wAddr.provinces.map { it.name },
                     enabled = wAddr.provinces.isNotEmpty(),
+                    modifier = Modifier.trackField("provinsi"),
+                    isError = isError("provinsi"),
                     onSelected = { pickedName ->
                         val picked = wAddr.provinces.first { it.name == pickedName }
                         form = form.copy(
@@ -565,12 +766,26 @@ fun CompleteProfileScreen(
                 )
 
                 // RT/RW
-                SimpleDropdown("RT", form.rt, rtOptions, enabled = true) {
-                    form = form.copy(rt = it)
-                }
-                SimpleDropdown("RW", form.rw, rwOptions, enabled = true) {
-                    form = form.copy(rw = it)
-                }
+                SimpleDropdown(
+                    label = "RT",
+                    value = form.rt,
+                    options = rtOptions,
+                    enabled = true,
+                    onSelected = { selected ->
+                        form = form.copy(rt = selected)
+                    }
+                )
+
+                SimpleDropdown(
+                    label = "RW",
+                    value = form.rw,
+                    options = rwOptions,
+                    enabled = true,
+                    onSelected = { selected ->
+                        form = form.copy(rw = selected)
+                    }
+                )
+
 
                 // alamat detail
                 Text("Alamat (Detail)", style = MaterialTheme.typography.labelLarge)
@@ -585,28 +800,110 @@ fun CompleteProfileScreen(
                 )
                 Spacer(Modifier.height(10.dp))
 
+                // kode pos
+                Text("Kode Pos", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(4.dp))
+
+                OutlinedTextField(
+                    value = form.kodePos,
+                    onValueChange = { input ->
+                        val digits = input.filter { it.isDigit() }
+
+                        // HARD LIMIT
+                        if (digits.length <= 5) {
+                            form = form.copy(kodePos = digits)
+
+                            if (digits.length == 5) {
+                                errorFields.remove("kodePos")
+                            }
+                        }
+                    },
+                    label = { Text("Kode Pos") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .trackField("kodePos"),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
+                    singleLine = true,
+
+                    // 🔴 ERROR jika tidak tepat 5
+                    isError = isError("kodePos") || (form.kodePos.isNotEmpty() && form.kodePos.length != 5),
+
+                    supportingText = {
+                        if (form.kodePos.isNotEmpty() && form.kodePos.length != 5) {
+                            Text(
+                                text = "Kode pos harus tepat 5 digit",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                )
+
+
+                Spacer(Modifier.height(10.dp))
+
                 // lain-lain
-                SimpleDropdown("Agama", form.agama, agamaOptions, enabled = true) {
-                    form = form.copy(agama = it)
-                }
                 SimpleDropdown(
-                    "Status Perkawinan",
-                    form.statusPerkawinan,
-                    statusOptions,
-                    enabled = true
-                ) { form = form.copy(statusPerkawinan = it) }
+                    label = "Agama",
+                    value = form.agama,
+                    options = agamaOptions,
+                    enabled = true,
+                    onSelected = { selected ->
+                        form = form.copy(agama = selected)
+                    }
+                )
+
                 SimpleDropdown(
-                    "Pekerjaan",
-                    form.pekerjaan,
-                    pekerjaanOptions,
-                    enabled = true
-                ) { form = form.copy(pekerjaan = it) }
+                    label = "Status Perkawinan",
+                    value = form.statusPerkawinan,
+                    options = statusOptions,
+                    enabled = true,
+                    onSelected = { selected ->
+                        form = form.copy(statusPerkawinan = selected)
+                    }
+                )
+
                 SimpleDropdown(
-                    "Kewarganegaraan",
-                    form.kewarganegaraan,
-                    kewarganegaraanOptions,
-                    enabled = true
-                ) { form = form.copy(kewarganegaraan = it) }
+                    label = "Pekerjaan",
+                    value = form.pekerjaan,
+                    options = pekerjaanOptions,
+                    enabled = true,
+                    onSelected = { selected ->
+                        form = form.copy(pekerjaan = selected)
+                    }
+                )
+
+                SimpleDropdown(
+                    label = "Kewarganegaraan",
+                    value = form.kewarganegaraan,
+                    options = kewarganegaraanOptions,
+                    enabled = true,
+                    onSelected = { selected ->
+                        form = form.copy(kewarganegaraan = selected)
+                    }
+                )
+
+                SimpleDropdown(
+                    label = "Golongan Darah",
+                    value = form.bloodType,
+                    options = bloodTypeOptions,
+                    enabled = true,
+                    onSelected = { selected ->
+                        form = form.copy(bloodType = selected)
+                    }
+                )
+
+                SimpleDropdown(
+                    label = "Pendidikan Terakhir",
+                    value = form.lastEducation,
+                    options = educationOptions,
+                    enabled = true,
+                    onSelected = { selected ->
+                        form = form.copy(lastEducation = selected)
+                    }
+                )
+
 
                 Spacer(Modifier.height(18.dp))
 
@@ -636,6 +933,7 @@ fun CompleteProfileScreen(
                 Box(
                     modifier = Modifier
                         .size(120.dp)
+                        .trackField("profile")
                         .clip(RoundedCornerShape(12.dp))
                         .border(
                             width = 1.dp,
@@ -683,6 +981,7 @@ fun CompleteProfileScreen(
         // ===== BUTTON LANJUT =====
         Button(
             onClick = {
+                if (!validateAndScroll()) return@Button
                 scope.launch {
                     loadingSubmit = true
                     errorMsg = null
@@ -703,14 +1002,17 @@ fun CompleteProfileScreen(
                             return@launch
                         }
 
-                        // ✅ REGISTER lalu LOGIN lalu SAVE TOKEN
+                        // REGISTER + LOGIN
                         registerRepo.registerThenLogin(idToken, form)
 
-                        successMsg = "Register + Login berhasil."
-                        onSuccess() // di NavGraph arahkan ke home
+                        // ✅ JANGAN navigate langsung
+                        showSuccessDialog = true
+
                     } catch (e: Exception) {
-                        errorMsg = "Submit gagal: ${e.message}"
-                    } finally {
+                        errorMsg = e.message ?: "Terjadi kesalahan"
+                        showErrorDialog = true
+                    }
+                    finally {
                         loadingSubmit = false
                     }
                 }
@@ -727,7 +1029,80 @@ fun CompleteProfileScreen(
             }
         }
     }
+    if (showSuccessDialog) {
+        RegisterSuccessDialog(
+            onDismiss = {
+                showSuccessDialog = false
+                onSuccess() // 🔥 trigger navigasi ke login
+            }
+        )
+    }
+    if (showErrorDialog && errorMsg != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showErrorDialog = false
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { showErrorDialog = false }
+                ) {
+                    Text("OK")
+                }
+            },
+            title = {
+                Text(
+                    text = "Terjadi Kesalahan",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = errorMsg!!,
+                    textAlign = TextAlign.Center
+                )
+            }
+        )
+    }
 }
+
+@Composable
+fun RegisterSuccessDialog(
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = {}, // disable klik luar
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("OK")
+            }
+        },
+        icon = {
+            Icon(
+                painter = painterResource(R.drawable.verifikasi),
+                contentDescription = null,
+                tint = Color.Unspecified,
+                modifier = Modifier.size(64.dp)
+            )
+        },
+        title = {
+            Text(
+                text = "Daftar Akun Berhasil",
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Text(
+                text = "Mohon tunggu KTP diverifikasi oleh admin.\nTerima kasih!",
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+    )
+}
+
+
+
 
 
 /* -------------------- UI components -------------------- */
@@ -739,7 +1114,10 @@ private fun SimpleDropdown(
     value: String,
     options: List<String>,
     enabled: Boolean = true,
-    onSelected: (String) -> Unit
+    onSelected: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    isError: Boolean = false
+
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -755,6 +1133,7 @@ private fun SimpleDropdown(
             enabled = enabled,
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            isError = isError,
             modifier = Modifier.fillMaxWidth().menuAnchor()
         )
 
@@ -831,6 +1210,8 @@ private fun SimpleDropdownOption(
 private fun DatePickerField(
     label: String,
     value: String,
+    isError: Boolean,
+    modifier: Modifier = Modifier,
     onDateSelected: (String) -> Unit
 ) {
     var open by remember { mutableStateOf(false) }
@@ -840,29 +1221,27 @@ private fun DatePickerField(
         value = value,
         onValueChange = {},
         readOnly = true,
+        isError = isError,
         label = { Text(label) },
         trailingIcon = {
             IconButton(onClick = { open = true }) {
-                Icon(Icons.Filled.DateRange, contentDescription = "Pilih tanggal")
+                Icon(Icons.Filled.DateRange, contentDescription = null)
             }
         },
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     )
-    Spacer(Modifier.height(10.dp))
 
     if (open) {
         DatePickerDialog(
             onDismissRequest = { open = false },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        val millis = state.selectedDateMillis
-                        if (millis != null) onDateSelected(formatDateDdMmYyyy(millis))
-                        open = false
+                TextButton(onClick = {
+                    state.selectedDateMillis?.let {
+                        onDateSelected(formatDateDdMmYyyy(it))
                     }
-                ) { Text("Pilih") }
-            },
-            dismissButton = { TextButton(onClick = { open = false }) { Text("Batal") } }
+                    open = false
+                }) { Text("Pilih") }
+            }
         ) {
             DatePicker(state = state)
         }
@@ -911,3 +1290,25 @@ fun CompleteProfileScreenPreview() {
         )
     }
 }
+
+@Preview(
+    showBackground = true,
+    showSystemUi = true,
+    device = "id:pixel_4"
+)
+@Composable
+fun RegisterSuccessDialogPreview() {
+    MaterialTheme {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0x33000000)), // simulasi background gelap
+            contentAlignment = Alignment.Center
+        ) {
+            RegisterSuccessDialog(
+                onDismiss = {}
+            )
+        }
+    }
+}
+

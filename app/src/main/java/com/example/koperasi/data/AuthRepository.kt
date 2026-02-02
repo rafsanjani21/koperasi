@@ -2,7 +2,11 @@ package com.example.koperasi.data
 
 import android.util.Log
 import com.example.koperasi.TokenManager
+import com.example.koperasi.data.remote.ApiClient
 import com.example.koperasi.data.remote.ApiService
+import com.example.koperasi.data.remote.LoginRequest
+import com.example.koperasi.data.remote.LogoutRequest
+import com.example.koperasi.data.remote.RefreshRequest
 import com.example.koperasi.data.remote.RefreshResponse
 import retrofit2.Response
 
@@ -11,53 +15,74 @@ class AuthRepository(
     private val tokenManager: TokenManager
 ) {
 
-    // PANGGIL endpoint refresh token
-    // - Kirim refresh_token lewat COOKIE: "refresh_token=<value>"
-    // - Terima access_token + refresh_token baru dalam JSON body
-    // - Simpan ke TokenManager
-    suspend fun refreshTokens(): Boolean {
-        val refreshRaw = tokenManager.getRefreshToken()
-        if (refreshRaw.isNullOrEmpty()) {
-            Log.e("AuthRepository", "Refresh token kosong, tidak bisa refresh")
-            return false
-        }
-
-        // Kirim sebagai cookie: refresh_token=<value_yang_kamu_simpan>
-        val cookieHeader = "refresh_token=$refreshRaw"
-        Log.d("AuthRepository", "Kirim cookie: $cookieHeader")
-
+    suspend fun logout(): Boolean {
         return try {
-            // Pastikan ApiService.refreshToken cocok:
-            // @POST("/api/auth/user/refresh")
-            // suspend fun refreshToken(@Header("Cookie") cookie: String): Response<RefreshResponse>
-            val res: Response<RefreshResponse> = api.refreshToken(cookieHeader)
+            val accessToken = tokenManager.getAccessToken() ?: return false
+            val refreshToken = tokenManager.getRefreshToken() ?: return false
 
-            if (!res.isSuccessful) {
-                Log.e(
-                    "AuthRepository",
-                    "Refresh gagal, code=${res.code()}, errorBody=${res.errorBody()?.string()}"
+            val res = api.logout(
+                bearer = "Bearer $accessToken",
+                body = LogoutRequest(
+                    tokenHash = refreshToken // 🔥 INI PENTING
                 )
-                return false
-            }
-
-            val body = res.body()
-            if (body == null) {
-                Log.e("AuthRepository", "Refresh body null")
-                return false
-            }
-
-            // Simpan token baru (sekalian update exp di TokenManager)
-            tokenManager.saveTokens(body.accessToken, body.refreshToken)
-            Log.d(
-                "AuthRepository",
-                "Refresh BERHASIL. access baru = ${body.accessToken.take(20)}..."
             )
-            true
 
+            res.isSuccessful
         } catch (e: Exception) {
-            Log.e("AuthRepository", "Exception saat refresh: ${e.message}")
             false
         }
     }
+
+
+    suspend fun refreshTokens(): Boolean {
+        return try {
+            val refreshToken = tokenManager.getRefreshToken() ?: return false
+
+            val res = api.refreshToken(
+                RefreshRequest(
+                    tokenHash = refreshToken // 🔥
+                )
+            )
+
+            if (res.isSuccessful) {
+                res.body()?.let {
+                    tokenManager.saveTokens(
+                        it.accessToken,
+                        it.refreshToken
+                    )
+                }
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+
+
+
+    suspend fun loginGoogle(
+        idToken: String,
+        location: String
+    ) {
+        val res = api.loginGoogle(
+            LoginRequest(
+                idToken = idToken,
+                location = location
+            )
+        )
+
+        if (!res.isSuccessful) {
+            throw IllegalStateException(
+                res.errorBody()?.string() ?: "Login gagal"
+            )
+        }
+
+        val body = res.body()!!
+        tokenManager.saveTokens(body.accessToken, body.refreshToken)
+    }
+
 
 }

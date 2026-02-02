@@ -26,25 +26,44 @@ class OCRViewModel(
     fun processImage(uri: Uri, contentResolver: ContentResolver) {
         viewModelScope.launch {
             try {
-                _uiState.update { it.copy(bitmapState = ViewState.Loading, ktpState = ViewState.Idle) }
+                _uiState.update {
+                    it.copy(
+                        bitmapState = ViewState.Loading,
+                        ktpState = ViewState.Loading
+                    )
+                }
 
                 val loadedBitmap = withContext(Dispatchers.IO) {
                     @Suppress("DEPRECATION")
                     MediaStore.Images.Media.getBitmap(contentResolver, uri)
                 }
 
-                _uiState.update { it.copy(bitmapState = ViewState.Success(loadedBitmap)) }
+                val croppedBitmap = withContext(Dispatchers.Default) {
+                    cropToKTPRatio(loadedBitmap)
+                }
 
-                // optional: crop rasio KTP biar parsing lebih stabil (ini dari repo)
-                val croppedBitmap = cropToKTPRatio(loadedBitmap)
+                val result = withContext(Dispatchers.IO) {
+                    ktpRepository.scanKTP(croppedBitmap)
+                }
 
-                val result = ktpRepository.scanKTP(croppedBitmap)
-                _uiState.update { it.copy(ktpState = ViewState.Success(result)) }
+                _uiState.update {
+                    it.copy(
+                        bitmapState = ViewState.Success(loadedBitmap),
+                        ktpState = ViewState.Success(result)
+                    )
+                }
+
             } catch (e: Exception) {
-                _uiState.update { it.copy(bitmapState = ViewState.Error(e.message ?: "Terjadi Kesalahan")) }
+                _uiState.update {
+                    it.copy(
+                        bitmapState = ViewState.Error(e.message ?: "Gagal memproses gambar"),
+                        ktpState = ViewState.Error(e.message ?: "Gagal membaca KTP")
+                    )
+                }
             }
         }
     }
+
 
     fun reset() {
         _uiState.value = OCRState()

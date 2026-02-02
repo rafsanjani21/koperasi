@@ -1,19 +1,21 @@
 package com.example.koperasi.pages
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -21,52 +23,77 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.koperasi.R
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
     onNavigateRegister: () -> Unit,
-    onGoogleLogin: () -> Unit
+    onGoogleLogin: suspend () -> Unit
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var shouldLoginGoogle by remember { mutableStateOf(false) }
+
+    val coroutineScope = rememberCoroutineScope()
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            // trigger login
+            shouldLoginGoogle = true
+        } else {
+            errorMessage = "Permission denied"
+            showErrorDialog = true
+        }
+    }
+
+    // Trigger Google login in composable context
+    if (shouldLoginGoogle) {
+        LaunchedEffect(Unit) {
+            try {
+                onGoogleLogin()
+            } catch (e: Exception) {
+                errorMessage = e.message ?: "Something went wrong"
+                showErrorDialog = true
+            } finally {
+                shouldLoginGoogle = false
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
 
+        // Background blur
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(color = Color(0x0FF5F5F5))
+                .background(Color(0x0FF5F5F5))
                 .blur(30.dp)
         )
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            //HEADER
+        Column(modifier = Modifier.fillMaxSize()) {
+
+            // HEADER
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(
-                        top = 24.dp,
-                        start = 24.dp,
-                        end = 24.dp,
-                        bottom = 24.dp
-                    ),
+                    .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
-                // Title di tengah
                 Text(
                     text = "Log In",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color(0xFF4461AD),
                     fontWeight = FontWeight.Bold,
-                    fontSize = 26.sp,
+                    fontSize = 26.sp
                 )
             }
+
             Spacer(modifier = Modifier.weight(1f))
 
-            //KONTEN TENGAH
+            // KONTEN TENGAH
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth()
@@ -80,15 +107,12 @@ fun LoginScreen(
                 Spacer(Modifier.height(24.dp))
 
                 Button(
-                    onClick = { onGoogleLogin() },
+                    onClick = {
+                        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    },
                     modifier = Modifier
                         .width(280.dp)
-                        .border(
-                            width = 1.dp,
-                            color = Color.LightGray,
-                            shape = RoundedCornerShape(50.dp)
-                        )
-                        .padding(0.dp),
+                        .border(1.dp, Color.LightGray, RoundedCornerShape(50.dp)),
                     shape = RoundedCornerShape(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
@@ -97,11 +121,9 @@ fun LoginScreen(
                         painter = painterResource(R.drawable.google),
                         tint = Color.Unspecified,
                         contentDescription = null,
-                        modifier = Modifier
-                            .size(34.dp)
+                        modifier = Modifier.size(34.dp)
                     )
-                    Spacer(Modifier.width(0.dp))
-                    Text("Continue With Google", color = Color(0xFF8C8C8C), fontSize = 15.sp)
+                    Text("Continue With Google", color = Color(0xFF8C8C8C))
                 }
 
                 Spacer(Modifier.height(16.dp))
@@ -122,10 +144,23 @@ fun LoginScreen(
                         textDecoration = TextDecoration.Underline
                     )
                 }
-
             }
 
             Spacer(modifier = Modifier.weight(1f))
+        }
+
+        // ALERT DIALOG ERROR
+        if (showErrorDialog && errorMessage != null) {
+            AlertDialog(
+                onDismissRequest = { showErrorDialog = false },
+                confirmButton = {
+                    TextButton(onClick = { showErrorDialog = false }) {
+                        Text("OK")
+                    }
+                },
+                title = { Text(text = "Login Error") },
+                text = { Text(text = errorMessage ?: "Unknown error") }
+            )
         }
     }
 }
