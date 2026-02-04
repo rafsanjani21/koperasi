@@ -509,7 +509,7 @@ fun CompleteProfileScreen(
 
                 val fieldShape = RoundedCornerShape(8.dp)
                 // NIK
-                Text("NIK", style = labelStyle)
+                Text("NIK*", style = labelStyle)
                 Spacer(Modifier.height(4.dp))
 
                 OutlinedTextField(
@@ -554,7 +554,7 @@ fun CompleteProfileScreen(
                 Spacer(Modifier.height(10.dp))
 
                 // Nama
-                Text("Nama", style = labelStyle)
+                Text("Nama*", style = labelStyle)
                 Spacer(Modifier.height(4.dp))
 
                 OutlinedTextField(
@@ -576,7 +576,7 @@ fun CompleteProfileScreen(
                 Spacer(Modifier.height(10.dp))
 
                 // No HP wajib 0
-                Text("Nomor HP (wajib diawali 0)", style = labelStyle)
+                Text("Nomor HP (wajib diawali 0)*", style = labelStyle)
                 Spacer(Modifier.height(4.dp))
 
                 OutlinedTextField(
@@ -641,7 +641,7 @@ fun CompleteProfileScreen(
                 Spacer(Modifier.height(10.dp))
 
                 // Nama Ibu Kandung
-                Text("Nama Ibu Kandung", style = labelStyle)
+                Text("Nama Ibu Kandung*", style = labelStyle)
                 Spacer(Modifier.height(4.dp))
 
                 OutlinedTextField(
@@ -661,7 +661,7 @@ fun CompleteProfileScreen(
 
 
                 // Tempat lahir
-                Text("Tempat Lahir", style = labelStyle)
+                Text("Tempat Lahir*", style = labelStyle)
                 Spacer(Modifier.height(4.dp))
 
                 PlaceOfBirthDropdown(
@@ -678,7 +678,7 @@ fun CompleteProfileScreen(
                 )
 
                 // Tanggal lahir
-                Text("Tanggal Lahir", style = labelStyle)
+                Text("Tanggal Lahir*", style = labelStyle)
                 Spacer(Modifier.height(4.dp))
                 DatePickerField(
                     label = "Tanggal Lahir",
@@ -690,7 +690,7 @@ fun CompleteProfileScreen(
 
 
                 // Jenis kelamin
-                Text("Jenis Kelamin", style = labelStyle)
+                Text("Jenis Kelamin*", style = labelStyle)
                 Spacer(Modifier.height(4.dp))
                 SimpleDropdownOption(
                     label = "Jenis Kelamin",
@@ -701,12 +701,12 @@ fun CompleteProfileScreen(
                 )
 
                 Spacer(Modifier.height(6.dp))
-                Text("Alamat (Wilayah)", style = MaterialTheme.typography.labelLarge)
+                Text("Alamat (Wilayah)*", style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(10.dp))
 
                 // Provinsi
                 SimpleDropdown(
-                    label = "Provinsi",
+                    label = "Provinsi*",
                     value = form.provinsi,
                     options = wAddr.provinces.map { it.name },
                     enabled = wAddr.provinces.isNotEmpty(),
@@ -729,7 +729,7 @@ fun CompleteProfileScreen(
 
                 // Kabupaten/Kota
                 SimpleDropdown(
-                    label = "Kabupaten/Kota",
+                    label = "Kabupaten/Kota*",
                     value = form.kabupaten,
                     options = wAddr.regencies.map { it.name },
                     enabled = addrProvinceCode.isNotBlank() && wAddr.regencies.isNotEmpty(),
@@ -744,7 +744,7 @@ fun CompleteProfileScreen(
 
                 // Kecamatan
                 SimpleDropdown(
-                    label = "Kecamatan",
+                    label = "Kecamatan*",
                     value = form.kecamatan,
                     options = wAddr.districts.map { it.name },
                     enabled = addrRegencyCode.isNotBlank() && wAddr.districts.isNotEmpty(),
@@ -758,7 +758,7 @@ fun CompleteProfileScreen(
 
                 // Kelurahan/Desa
                 SimpleDropdown(
-                    label = "Kelurahan/Desa",
+                    label = "Kelurahan/Desa*",
                     value = form.kelurahan,
                     options = wAddr.villages.map { it.name },
                     enabled = addrDistrictCode.isNotBlank() && wAddr.villages.isNotEmpty(),
@@ -767,7 +767,7 @@ fun CompleteProfileScreen(
 
                 // RT/RW
                 SimpleDropdown(
-                    label = "RT",
+                    label = "RT*",
                     value = form.rt,
                     options = rtOptions,
                     enabled = true,
@@ -777,7 +777,7 @@ fun CompleteProfileScreen(
                 )
 
                 SimpleDropdown(
-                    label = "RW",
+                    label = "RW*",
                     value = form.rw,
                     options = rwOptions,
                     enabled = true,
@@ -788,7 +788,7 @@ fun CompleteProfileScreen(
 
 
                 // alamat detail
-                Text("Alamat (Detail)", style = MaterialTheme.typography.labelLarge)
+                Text("Alamat (Detail)*", style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(4.dp))
 
                 OutlinedTextField(
@@ -801,7 +801,7 @@ fun CompleteProfileScreen(
                 Spacer(Modifier.height(10.dp))
 
                 // kode pos
-                Text("Kode Pos", style = MaterialTheme.typography.labelLarge)
+                Text("Kode Pos*", style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(4.dp))
 
                 OutlinedTextField(
@@ -845,7 +845,7 @@ fun CompleteProfileScreen(
 
                 // lain-lain
                 SimpleDropdown(
-                    label = "Agama",
+                    label = "Agama*",
                     value = form.agama,
                     options = agamaOptions,
                     enabled = true,
@@ -855,7 +855,7 @@ fun CompleteProfileScreen(
                 )
 
                 SimpleDropdown(
-                    label = "Status Perkawinan",
+                    label = "Status Perkawinan*",
                     value = form.statusPerkawinan,
                     options = statusOptions,
                     enabled = true,
@@ -865,7 +865,7 @@ fun CompleteProfileScreen(
                 )
 
                 SimpleDropdown(
-                    label = "Pekerjaan",
+                    label = "Pekerjaan*",
                     value = form.pekerjaan,
                     options = pekerjaanOptions,
                     enabled = true,
@@ -875,7 +875,7 @@ fun CompleteProfileScreen(
                 )
 
                 SimpleDropdown(
-                    label = "Kewarganegaraan",
+                    label = "Kewarganegaraan*",
                     value = form.kewarganegaraan,
                     options = kewarganegaraanOptions,
                     enabled = true,
@@ -885,7 +885,7 @@ fun CompleteProfileScreen(
                 )
 
                 SimpleDropdown(
-                    label = "Golongan Darah",
+                    label = "Golongan Darah*",
                     value = form.bloodType,
                     options = bloodTypeOptions,
                     enabled = true,
@@ -895,7 +895,7 @@ fun CompleteProfileScreen(
                 )
 
                 SimpleDropdown(
-                    label = "Pendidikan Terakhir",
+                    label = "Pendidikan Terakhir*",
                     value = form.lastEducation,
                     options = educationOptions,
                     enabled = true,
@@ -923,7 +923,7 @@ fun CompleteProfileScreen(
 
                 // Title
                 Text(
-                    text = "Foto Profile",
+                    text = "Foto Profile*",
                     style = MaterialTheme.typography.labelLarge
                 )
 
@@ -1215,7 +1215,21 @@ private fun DatePickerField(
     onDateSelected: (String) -> Unit
 ) {
     var open by remember { mutableStateOf(false) }
-    val state = rememberDatePickerState()
+
+    // 🔥 Set default ke 1 Januari 2000
+    val calendar2000 = remember {
+        Calendar.getInstance().apply {
+            set(Calendar.YEAR, 2000)
+            set(Calendar.MONTH, Calendar.JANUARY)
+            set(Calendar.DAY_OF_MONTH, 1)
+        }
+    }
+
+    val state = rememberDatePickerState(
+        initialSelectedDateMillis = calendar2000.timeInMillis
+        // atau:
+        // initialDisplayedMonthMillis = calendar2000.timeInMillis
+    )
 
     OutlinedTextField(
         value = value,
@@ -1240,13 +1254,16 @@ private fun DatePickerField(
                         onDateSelected(formatDateDdMmYyyy(it))
                     }
                     open = false
-                }) { Text("Pilih") }
+                }) {
+                    Text("Pilih")
+                }
             }
         ) {
             DatePicker(state = state)
         }
     }
 }
+
 
 private fun formatDateDdMmYyyy(millis: Long): String {
     val cal = Calendar.getInstance().apply { timeInMillis = millis }

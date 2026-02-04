@@ -3,6 +3,7 @@ package com.example.koperasi
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
+import android.util.Log
 import androidx.core.content.edit
 import org.json.JSONObject
 
@@ -13,7 +14,7 @@ class TokenManager(context: Context) {
 
     companion object {
         private const val ACCESS_TOKEN = "access_token"
-        private const val REFRESH_TOKEN = "refresh_token"
+        private const val TOKEN_HASH = "token_hash"
         private const val ACCESS_TOKEN_EXP = "access_token_exp"   // waktu exp dalam detik (unix time)
 
         // ✅ Tambahan: simpan id_token (firebase/google id token)
@@ -21,23 +22,29 @@ class TokenManager(context: Context) {
     }
 
     // Simpan access + refresh token (dipanggil saat login)
-    fun saveTokens(accessToken: String, refreshToken: String) {
+    fun saveTokens(accessToken: String, tokenHash: String?) {
+        if (tokenHash.isNullOrEmpty()) {
+            Log.e("TOKEN", "token_hash null saat saveTokens")
+            return
+        }
+
         val expSec = parseJwtExp(accessToken)
 
         prefs.edit {
             putString(ACCESS_TOKEN, accessToken)
-            putString(REFRESH_TOKEN, refreshToken)
+            putString(TOKEN_HASH, tokenHash)
             if (expSec != null) {
                 putLong(ACCESS_TOKEN_EXP, expSec)
-            } else {
-                remove(ACCESS_TOKEN_EXP)
             }
         }
     }
 
+
+
     fun getAccessToken(): String? = prefs.getString(ACCESS_TOKEN, null)
 
-    fun getRefreshToken(): String? = prefs.getString(REFRESH_TOKEN, null)
+    fun getTokenHash(): String? =
+        prefs.getString(TOKEN_HASH, null)
 
     // ✅ ID TOKEN (untuk register complete profile)
     fun saveIdToken(idToken: String) {
@@ -61,11 +68,20 @@ class TokenManager(context: Context) {
 
     // true kalau token mau habis dalam `thresholdSeconds` (default 5 detik)
     fun isAccessTokenAlmostExpired(thresholdSeconds: Long = 5L): Boolean {
-        val expSec = getAccessTokenExp() ?: return false   // kalau nggak tahu exp, anggap aja aman
+        val expSec = getAccessTokenExp()
+
+        Log.d("TOKEN_DEBUG", "expSec = $expSec")
+
+        if (expSec == null) return false
+
         val nowSec = System.currentTimeMillis() / 1000
         val sisa = expSec - nowSec
+
+        Log.d("TOKEN_DEBUG", "sisa detik token = $sisa")
+
         return sisa <= thresholdSeconds
     }
+
 
     // Parse claim "exp" dari JWT
     private fun parseJwtExp(token: String): Long? {

@@ -1,20 +1,18 @@
 package com.example.koperasi.navigation
 
-import android.util.Log
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.koperasi.AuthCoordinator
 import com.example.koperasi.TokenManager
 import com.example.koperasi.data.AuthRepository
 import com.example.koperasi.data.remote.ApiClient
-import com.example.koperasi.pages.CompleteProfileScreen
-import com.example.koperasi.pages.LoginScreen
-import com.example.koperasi.pages.RegisterScreen
-import com.example.koperasi.pages.SplashScreen
-import kotlinx.coroutines.delay
+import com.example.koperasi.pages.*
+import com.example.koperasi.viewmodel.AuthViewModel
+import com.example.koperasi.viewmodel.AuthViewModelFactory
 
 @Composable
 fun AppNavGraph(
@@ -22,64 +20,99 @@ fun AppNavGraph(
     startDestination: String,
     isLoggedIn: Boolean,
     tokenManager: TokenManager,
-    onGoogleLogin: () -> Unit,
-    onGoogleRegister: () -> Unit,
+    authCoordinator: AuthCoordinator,   // ✅ TAMBAHAN
+    lastKnownLocation: String,           // ✅ TAMBAHAN
     onLogout: () -> Unit
 ) {
-    NavHost(navController = navController, startDestination = startDestination) {
 
+    NavHost(
+        navController = navController,
+        startDestination = startDestination
+    ) {
+
+        // ================= SPLASH =================
         composable("splash") {
             SplashScreen(navController, isLoggedIn)
         }
 
+        // ================= LOGIN =================
         composable("login") {
+
+            val authViewModel: AuthViewModel = viewModel(
+                factory = AuthViewModelFactory(
+                    AuthRepository(ApiClient.api, tokenManager)
+                )
+            )
+
+
             LoginScreen(
-                onNavigateRegister = { navController.navigate("register") },
-                onGoogleLogin = onGoogleLogin
+                viewModel = authViewModel,
+                onNavigateRegister = {
+                    navController.navigate("register")
+                },
+                onLoginGoogle = {
+                    authCoordinator.startGoogleSignIn(
+                        isRegisterFlow = false,
+                        location = lastKnownLocation,
+                        onError = { msg: String ->   // ✅ FIX TYPE
+                            authViewModel.setError(msg)
+                        }
+                    )
+                }
             )
         }
 
-
+        // ================= REGISTER =================
         composable("register") {
+
             val infoMessage =
                 navController.currentBackStackEntry
                     ?.savedStateHandle
-                    ?.get<String>("info") ?: ""
+                    ?.get<String>("info")
+                    ?: ""
 
             RegisterScreen(
                 infoMessage = infoMessage,
-                onNavigateLogin = { navController.popBackStack() },
-                onGoogleRegister = onGoogleRegister
-            )
-        }
-
-        composable("complete_profile") {
-            CompleteProfileScreen(
-                idTokenProvider = {
-                    tokenManager.getIdToken()
-                        ?: error("ID Token kosong. Login ulang.")
+                onNavigateLogin = {
+                    navController.popBackStack()
                 },
-                onSuccess = {
-                    navController.navigate("login") {
-                        popUpTo("complete_profile") { inclusive = true }
-                    }
+                onGoogleRegister = {
+                    authCoordinator.startGoogleSignIn(
+                        isRegisterFlow = true,
+                        location = lastKnownLocation,
+                        onError = { msg: String ->
+                            navController.currentBackStackEntry
+                                ?.savedStateHandle
+                                ?.set("info", msg)
+                        }
+                    )
                 }
             )
         }
 
-        composable("home") {
-            val authRepo = remember {
-                AuthRepository(ApiClient.api, tokenManager)
-            }
+        // ================= COMPLETE PROFILE =================
+        composable("complete_profile") {
 
-            LaunchedEffect(Unit) {
-                while (true) {
-                    delay(60_000)
-                    if (tokenManager.isAccessTokenAlmostExpired(5)) {
-                        authRepo.refreshTokens()
-                    }
+            val idToken = tokenManager.getIdToken()
+
+            if (idToken == null) {
+                navController.navigate("login") {
+                    popUpTo("complete_profile") { inclusive = true }
                 }
+            } else {
+                CompleteProfileScreen(
+                    idTokenProvider = { idToken },
+                    onSuccess = {
+                        navController.navigate("login") {
+                            popUpTo("complete_profile") { inclusive = true }
+                        }
+                    }
+                )
             }
+        }
+
+        // ================= HOME =================
+        composable("home") {
 
             MainBottomNavScreen(
                 onLogoutSuccess = onLogout
@@ -87,5 +120,3 @@ fun AppNavGraph(
         }
     }
 }
-
-

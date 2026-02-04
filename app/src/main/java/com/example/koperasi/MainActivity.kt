@@ -89,24 +89,13 @@ class MainActivity : ComponentActivity() {
                     AppNavGraph(
                         navController = navController,
                         startDestination = "splash",
-                        isLoggedIn = isLoggedIn,
+                        isLoggedIn = tokenManager.getAccessToken() != null,
                         tokenManager = tokenManager,
-                        onGoogleLogin = {
-                            authCoordinator.startGoogleSignIn(
-                                isRegisterFlow = false,
-                                location = lastKnownLocation
-                            )
+                        authCoordinator = authCoordinator,   // ✅
+                        lastKnownLocation = "JAKARTA",       // ✅ bisa dummy dulu
+                        onLogout = {
+                            authCoordinator.logout()
                         }
-
-                        ,
-                        onGoogleRegister = {
-                            authCoordinator.startGoogleSignIn(
-                                isRegisterFlow = true,
-                                location = lastKnownLocation
-                            )
-                        }
-                        ,
-                        onLogout = { authCoordinator.logout() }
                     )
                 }
             }

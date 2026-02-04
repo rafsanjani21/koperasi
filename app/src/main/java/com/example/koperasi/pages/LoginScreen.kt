@@ -15,67 +15,54 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.koperasi.R
-import kotlinx.coroutines.launch
+import com.example.koperasi.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(
+    viewModel: AuthViewModel,
     onNavigateRegister: () -> Unit,
-    onGoogleLogin: suspend () -> Unit
+    onLoginGoogle: () -> Unit
 ) {
-    val context = LocalContext.current
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var showErrorDialog by remember { mutableStateOf(false) }
-    var shouldLoginGoogle by remember { mutableStateOf(false) }
 
-    val coroutineScope = rememberCoroutineScope()
+    // 🔥 SINGLE SOURCE OF TRUTH
+    val error by viewModel.errorMessage.collectAsState()
+    var showDialog by remember { mutableStateOf(false) }
 
-    val locationPermissionLauncher = rememberLauncherForActivityResult(
+    // 🔥 REAKSI SAAT ERROR BERUBAH
+    LaunchedEffect(error) {
+        showDialog = error != null
+    }
+
+    // 🔥 PERMISSION LAUNCHER
+    val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
-            // trigger login
-            shouldLoginGoogle = true
+            onLoginGoogle()
         } else {
-            errorMessage = "Permission denied"
-            showErrorDialog = true
-        }
-    }
-
-    // Trigger Google login in composable context
-    if (shouldLoginGoogle) {
-        LaunchedEffect(Unit) {
-            try {
-                onGoogleLogin()
-            } catch (e: Exception) {
-                errorMessage = e.message ?: "Something went wrong"
-                showErrorDialog = true
-            } finally {
-                shouldLoginGoogle = false
-            }
+            viewModel.setError("Izin lokasi diperlukan untuk login")
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
 
-        // Background blur
+        // ================= BACKGROUND =================
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0x0FF5F5F5))
+                .background(Color(0xFFF5F5F5))
                 .blur(30.dp)
         )
 
         Column(modifier = Modifier.fillMaxSize()) {
 
-            // HEADER
+            // ================= TITLE =================
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -84,22 +71,21 @@ fun LoginScreen(
             ) {
                 Text(
                     text = "Log In",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = Color(0xFF4461AD),
+                    fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 26.sp
+                    color = Color(0xFF4461AD)
                 )
             }
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // KONTEN TENGAH
+            // ================= CONTENT =================
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.splash),
+                    painter = painterResource(R.drawable.splash),
                     contentDescription = "Logo",
                     modifier = Modifier.size(215.dp)
                 )
@@ -108,37 +94,35 @@ fun LoginScreen(
 
                 Button(
                     onClick = {
-                        locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        permissionLauncher.launch(
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        )
                     },
                     modifier = Modifier
                         .width(280.dp)
                         .border(1.dp, Color.LightGray, RoundedCornerShape(50.dp)),
                     shape = RoundedCornerShape(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.google),
-                        tint = Color.Unspecified,
                         contentDescription = null,
+                        tint = Color.Unspecified,
                         modifier = Modifier.size(34.dp)
                     )
-                    Text("Continue With Google", color = Color(0xFF8C8C8C))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Continue with Google", color = Color(0xFF8C8C8C))
                 }
 
                 Spacer(Modifier.height(16.dp))
 
                 Row(
                     modifier = Modifier.clickable { onNavigateRegister() },
-                    horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Text("Don’t have an account? ")
                     Text(
-                        text = "Don’t have an account?",
-                        color = Color.Black
-                    )
-                    Text(
-                        text = "Sign Up",
+                        "Sign Up",
                         color = Color(0xFF4461AD),
                         fontWeight = FontWeight.Bold,
                         textDecoration = TextDecoration.Underline
@@ -149,27 +133,26 @@ fun LoginScreen(
             Spacer(modifier = Modifier.weight(1f))
         }
 
-        // ALERT DIALOG ERROR
-        if (showErrorDialog && errorMessage != null) {
+        // ================= ERROR DIALOG =================
+        if (showDialog && error != null) {
             AlertDialog(
-                onDismissRequest = { showErrorDialog = false },
+                onDismissRequest = {
+                    showDialog = false
+                    viewModel.clearError()
+                },
                 confirmButton = {
-                    TextButton(onClick = { showErrorDialog = false }) {
+                    TextButton(
+                        onClick = {
+                            showDialog = false
+                            viewModel.clearError()
+                        }
+                    ) {
                         Text("OK")
                     }
                 },
-                title = { Text(text = "Login Error") },
-                text = { Text(text = errorMessage ?: "Unknown error") }
+                title = { Text("Login Gagal") },
+                text = { Text(error!!) }
             )
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun LoginScreenPreview() {
-    LoginScreen(
-        onNavigateRegister = {},
-        onGoogleLogin = {}
-    )
 }

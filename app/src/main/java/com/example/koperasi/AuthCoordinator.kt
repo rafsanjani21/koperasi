@@ -8,8 +8,6 @@ import androidx.credentials.GetCredentialRequest
 import androidx.navigation.NavHostController
 import com.example.koperasi.auth.GoogleAuthUiClient
 import com.example.koperasi.data.AuthRepository
-import com.example.koperasi.data.remote.ApiClient
-import com.example.koperasi.data.remote.LoginRequest
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.*
@@ -25,21 +23,21 @@ class AuthCoordinator(
 ) {
 
     private var isRegisterFlow = false
-    private var locationValue: String = "UNKNOWN_LOCATION"
+    private var locationValue = "UNKNOWN"
 
     private val WEB_CLIENT_ID =
         "1085008448604-0oucanl872c1lkrovvsptl9k9jts7hsd.apps.googleusercontent.com"
 
     fun startGoogleSignIn(
         isRegisterFlow: Boolean,
-        location: String
+        location: String,
+        onError: (String) -> Unit
     ) {
         this.isRegisterFlow = isRegisterFlow
         this.locationValue = location
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                // 🔥 WAJIB CLEAR CACHE
                 credentialManager.clearCredentialState(
                     ClearCredentialStateRequest()
                 )
@@ -47,7 +45,7 @@ class AuthCoordinator(
                 val option = GetGoogleIdOption.Builder()
                     .setServerClientId(WEB_CLIENT_ID)
                     .setFilterByAuthorizedAccounts(false)
-                    .setAutoSelectEnabled(false) // 🔥 WAJIB
+                    .setAutoSelectEnabled(false)
                     .build()
 
                 val request = GetCredentialRequest.Builder()
@@ -58,27 +56,26 @@ class AuthCoordinator(
                 val credential =
                     GoogleIdTokenCredential.createFrom(result.credential.data)
 
-                handleGoogleToken(credential.idToken ?: return@launch)
+                handleGoogleToken(credential.idToken!!, onError)
 
             } catch (e: Exception) {
-                Log.e("GOOGLE_AUTH", e.message ?: "")
+                onError("Login Google dibatalkan")
             }
         }
     }
 
-    private fun handleGoogleToken(googleToken: String) {
+    private fun handleGoogleToken(
+        googleToken: String,
+        onError: (String) -> Unit
+    ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val firebaseUser = googleAuth.currentUser()
                     ?: googleAuth.signInWithToken(googleToken).user
                     ?: return@launch
 
-                val tokenResult = firebaseUser
-                    .getIdToken(true)
-                    ?.await()
-                    ?: return@launch
-
-                val firebaseIdToken = tokenResult.token ?: return@launch
+                val firebaseIdToken =
+                    firebaseUser.getIdToken(true).await().token ?: return@launch
 
                 tokenManager.saveIdToken(firebaseIdToken)
 
@@ -89,52 +86,45 @@ class AuthCoordinator(
                     return@launch
                 }
 
-                val res = ApiClient.api.loginGoogle(
-                    LoginRequest(
-                        idToken = firebaseIdToken,
-                        location = locationValue
-                    )
+                authRepository.loginGoogle(
+                    idToken = firebaseIdToken,
+                    location = locationValue
                 )
 
-                if (res.isSuccessful) {
-                    res.body()?.let {
-                        tokenManager.saveTokens(it.accessToken, it.refreshToken)
+                withContext(Dispatchers.Main) {
+                    getNavController()?.navigate("home") {
+                        popUpTo("login") { inclusive = true }
                     }
-
-                    withContext(Dispatchers.Main) {
-                        getNavController()?.navigate("home") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    }
-                } else {
-                    Log.e("LOGIN", res.errorBody()?.string() ?: "")
                 }
 
             } catch (e: Exception) {
-                Log.e("HANDLE_TOKEN", e.message ?: "")
+                val message = when {
+                    e.message?.contains("not verified", true) == true ->
+                        "Akun Anda belum diverifikasi oleh admin.\nSilakan menunggu pihak koperasi."
+                    else -> e.message ?: "Login gagal"
+                }
+
+                Log.e("LOGIN_ERROR", message)
+
+                withContext(Dispatchers.Main) {
+                    onError(message)
+                }
             }
         }
     }
 
-
     fun logout() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // 🔥 HIT API LOGOUT
                 authRepository.logout()
-
-            } catch (e: Exception) {
-                Log.e("LOGOUT_API", e.message ?: "")
             } finally {
                 withContext(Dispatchers.Main) {
-                    // 🔥 CLEAR SEMUA STATE LOKAL
                     credentialManager.clearCredentialState(
                         ClearCredentialStateRequest()
                     )
                     googleAuth.signOut()
                     tokenManager.clearTokens()
 
-                    // 🔥 BALIK KE LOGIN
                     getNavController()?.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
@@ -142,6 +132,4 @@ class AuthCoordinator(
             }
         }
     }
-
 }
-

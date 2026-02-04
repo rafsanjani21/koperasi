@@ -1,32 +1,52 @@
 package com.example.koperasi.data.remote
 
+import android.content.Context
+import com.example.koperasi.TokenManager
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.concurrent.TimeUnit
 
 object ApiClient {
 
     private const val BASE_URL = "http://192.168.52.29:8080/"
 
-    // Logging interceptor untuk melihat request/response di Logcat
+    // 🔥 DI-INJECT DARI APPLICATION
+    private lateinit var tokenManager: TokenManager
+
+    fun init(context: Context) {
+        tokenManager = TokenManager(context)
+    }
+
     private val loggingInterceptor: HttpLoggingInterceptor by lazy {
         HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
     }
 
-    // Kalau nanti mau tambah AuthInterceptor, bisa di sini juga
+    /**
+     * ⚠️ Retrofit KHUSUS refresh
+     * TANPA authenticator → biar tidak infinite loop
+     */
+    private val refreshApi: ApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ApiService::class.java)
+    }
+
     private val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
-            .connectTimeout(60, TimeUnit.SECONDS)
-            .writeTimeout(60, TimeUnit.SECONDS) // 🔥 PALING PENTING
-            .readTimeout(60, TimeUnit.SECONDS)
+            .authenticator(
+                TokenAuthenticator(
+                    tokenManager,
+                    refreshApi
+                )
+            )
             .build()
     }
-
 
     val api: ApiService by lazy {
         Retrofit.Builder()

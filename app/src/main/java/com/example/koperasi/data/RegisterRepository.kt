@@ -10,15 +10,32 @@ import com.example.koperasi.utils.DeviceInfo
 import com.example.koperasi.utils.filePart
 import com.example.koperasi.data.mapper.*
 import com.example.koperasi.utils.toTextBody
+import com.google.gson.Gson
 
+// =====================
+// API ERROR MODEL
+// =====================
+data class ApiErrorResponse(
+    val error: String?,
+    val message: String?
+)
 
+// =====================
+// REPOSITORY
+// =====================
 class RegisterRepository(
     private val api: ApiService,
     private val context: Context,
     private val tokenManager: TokenManager,
 ) {
 
-    suspend fun registerThenLogin(idToken: String, form: CompleteProfileForm) {
+    // =====================
+    // REGISTER → LOGIN
+    // =====================
+    suspend fun registerThenLogin(
+        idToken: String,
+        form: CompleteProfileForm
+    ) {
         registerMultipart(idToken, form)
 
         val device = DeviceInfo.getDeviceInfo()
@@ -26,42 +43,55 @@ class RegisterRepository(
             "Android ${device["os_version"]} (API ${device["api_level"]}); " +
                     "Brand=${device["device_brand"]}; Model=${device["device_model"]}"
 
-        val loginRes = api.loginGoogle(LoginRequest(idToken, deviceInfo))
+        val loginRes = api.loginGoogle(
+            LoginRequest(idToken, deviceInfo)
+        )
 
         if (!loginRes.isSuccessful) {
-            val err = loginRes.errorBody()?.string().orEmpty()
+            val errBody = loginRes.errorBody()?.string().orEmpty()
 
-            // 🔥 NOT VERIFIED BUKAN ERROR FATAL
-            if (loginRes.code() == 400 && err.contains("not verified", true)) {
+            // 🔥 USER BELUM VERIFIED BUKAN ERROR FATAL
+            if (loginRes.code() == 400 && errBody.contains("not verified", true)) {
                 Log.w("LOGIN", "User belum diverifikasi, lanjut ke login screen")
-                return // ⬅️ PENTING: JANGAN THROW
+                return
             }
 
-            throw IllegalStateException("Login gagal ${loginRes.code()} $err")
+            val message = parseErrorMessage(
+                code = loginRes.code(),
+                rawBody = errBody,
+                defaultMessage = "Login gagal"
+            )
+
+            throw IllegalStateException(message)
         }
 
+        val body = loginRes.body()
+            ?: throw IllegalStateException("Login gagal: response kosong")
 
-        val body = loginRes.body() ?: error("Login body kosong")
-        tokenManager.saveTokens(body.accessToken, body.refreshToken)
+        tokenManager.saveTokens(
+            body.accessToken,
+            body.tokenHash
+        )
     }
 
+    // =====================
+    // REGISTER MULTIPART
+    // =====================
     private suspend fun registerMultipart(
         idToken: String,
         form: CompleteProfileForm
     ) {
 
-        // ================= DEBUG WAJIB =================
         Log.d(
             "UPLOAD",
             """
-        KTP URI     = ${form.ktpImageUri}
-        PROFILE URI = ${form.profilePhotoUri}
-        """.trimIndent()
+            KTP URI     = ${form.ktpImageUri}
+            PROFILE URI = ${form.profilePhotoUri}
+            """.trimIndent()
         )
 
-        // ================= VALIDASI WAJIB =================
-        requireNotNull(form.ktpImageUri) { "KTP image belum dipilih" }
-        requireNotNull(form.profilePhotoUri) { "Profile image belum dipilih" }
+        requireNotNull(form.ktpImageUri) { "Foto KTP wajib diunggah" }
+        requireNotNull(form.profilePhotoUri) { "Foto profil wajib diunggah" }
 
         try {
             val res = api.registerUserMultipart(
@@ -95,28 +125,33 @@ class RegisterRepository(
 
                 ktp_picture = filePart(
                     context,
-                    form.ktpImageUri!!,
+                    form.ktpImageUri,
                     "ktp_picture"
                 ),
 
                 profile_picture = filePart(
                     context,
-                    form.profilePhotoUri!!,
+                    form.profilePhotoUri,
                     "profile_picture"
                 )
             )
 
             if (!res.isSuccessful) {
-                val errorBody = res.errorBody()?.string()
+                val rawError = res.errorBody()?.string()
 
                 Log.e(
                     "UPLOAD",
-                    "Register gagal ${res.code()} | body=$errorBody"
+                    "Register gagal ${res.code()} | body=$rawError"
                 )
 
-                throw IllegalStateException("Register gagal ${res.code()}")
-            }
+                val message = parseErrorMessage(
+                    code = res.code(),
+                    rawBody = rawError,
+                    defaultMessage = "Registrasi gagal"
+                )
 
+                throw IllegalStateException(message)
+            }
 
         } catch (e: Exception) {
             Log.e("UPLOAD", "Multipart crash", e)
@@ -124,4 +159,37 @@ class RegisterRepository(
         }
     }
 
+    // =====================
+    // ERROR PARSER
+    // =====================
+    private fun parseErrorMessage(
+        code: Int,
+        rawBody: String?,
+        defaultMessage: String
+    ): String {
+
+        val apiError = try {
+            Gson().fromJson(rawBody, ApiErrorResponse::class.java)
+        } catch (e: Exception) {
+            null
+        }
+
+        // 🔥 CUSTOM UX MAPPING
+        return when {
+            apiError?.error?.contains("nik", ignoreCase = true) == true ->
+                "NIK sudah terdaftar. Silakan gunakan NIK lain."
+
+            apiError?.error?.contains("phone", ignoreCase = true) == true ->
+                "Nomor HP sudah digunakan."
+
+            apiError?.message != null ->
+                apiError.message
+
+            !rawBody.isNullOrBlank() ->
+                rawBody
+
+            else ->
+                "$defaultMessage ($code)"
+        }
+    }
 }
