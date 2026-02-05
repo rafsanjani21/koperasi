@@ -82,9 +82,4 @@ interface ApiService {
         @Body body: RefreshRequest
     ): Response<RefreshResponse>
 
-    // ================= ME =================
-    @GET("/api/auth/user/me")
-    suspend fun getMe(
-        @Header("Authorization") bearer: String
-    ): Response<UserData>
 }

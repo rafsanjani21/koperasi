@@ -15,6 +15,16 @@ import com.google.gson.Gson
 // =====================
 // API ERROR MODEL
 // =====================
+/**
+ * ApiErrorResponse
+ *
+ * Model representasi error response dari backend API.
+ * Digunakan untuk parsing pesan error agar dapat ditampilkan
+ * dengan pesan yang lebih ramah ke pengguna.
+ *
+ * @param error Pesan error utama dari backend
+ * @param message Pesan tambahan dari backend
+ */
 data class ApiErrorResponse(
     val error: String?,
     val message: String?
@@ -23,6 +33,21 @@ data class ApiErrorResponse(
 // =====================
 // REPOSITORY
 // =====================
+/**
+ * RegisterRepository
+ *
+ * Repository yang bertanggung jawab atas proses:
+ * - Registrasi pengguna (multipart/form-data)
+ * - Login otomatis setelah registrasi berhasil
+ * - Parsing error dari backend agar user-friendly
+ *
+ * Repository ini berperan sebagai penghubung antara ViewModel
+ * dan API Service pada proses pendaftaran anggota koperasi.
+ *
+ * @param api ApiService untuk komunikasi dengan backend
+ * @param context Context Android untuk kebutuhan upload file
+ * @param tokenManager TokenManager untuk penyimpanan token autentikasi
+ */
 class RegisterRepository(
     private val api: ApiService,
     private val context: Context,
@@ -32,17 +57,36 @@ class RegisterRepository(
     // =====================
     // REGISTER → LOGIN
     // =====================
+    /**
+     * registerThenLogin
+     *
+     * Melakukan alur:
+     * 1. Registrasi pengguna menggunakan multipart request
+     * 2. Login otomatis menggunakan Google ID Token
+     * 3. Menyimpan access token dan token hash jika login berhasil
+     *
+     * Catatan:
+     * - Jika user belum diverifikasi oleh backend, login dianggap
+     *   bukan error fatal dan proses dihentikan dengan aman.
+     *
+     * @param idToken Google ID Token hasil autentikasi Google
+     * @param form Data lengkap profil pengguna
+     * @throws IllegalStateException Jika registrasi atau login gagal
+     */
     suspend fun registerThenLogin(
         idToken: String,
         form: CompleteProfileForm
     ) {
+        // ================= REGISTRASI =================
         registerMultipart(idToken, form)
 
+        // ================= DEVICE INFO =================
         val device = DeviceInfo.getDeviceInfo()
         val deviceInfo =
             "Android ${device["os_version"]} (API ${device["api_level"]}); " +
                     "Brand=${device["device_brand"]}; Model=${device["device_model"]}"
 
+        // ================= LOGIN =================
         val loginRes = api.loginGoogle(
             LoginRequest(idToken, deviceInfo)
         )
@@ -65,6 +109,7 @@ class RegisterRepository(
             throw IllegalStateException(message)
         }
 
+        // ================= SIMPAN TOKEN =================
         val body = loginRes.body()
             ?: throw IllegalStateException("Login gagal: response kosong")
 
@@ -77,6 +122,20 @@ class RegisterRepository(
     // =====================
     // REGISTER MULTIPART
     // =====================
+    /**
+     * registerMultipart
+     *
+     * Mengirim data pendaftaran pengguna menggunakan
+     * multipart/form-data, termasuk:
+     * - Data identitas
+     * - Data kependudukan
+     * - Foto KTP
+     * - Foto profil
+     *
+     * @param idToken Google ID Token
+     * @param form Data lengkap profil pengguna
+     * @throws IllegalStateException Jika registrasi gagal
+     */
     private suspend fun registerMultipart(
         idToken: String,
         form: CompleteProfileForm
@@ -90,14 +149,17 @@ class RegisterRepository(
             """.trimIndent()
         )
 
+        // Validasi file wajib
         requireNotNull(form.ktpImageUri) { "Foto KTP wajib diunggah" }
         requireNotNull(form.profilePhotoUri) { "Foto profil wajib diunggah" }
 
         try {
             val res = api.registerUserMultipart(
 
+                // ===== AUTH =====
                 idToken = idToken.toTextBody(),
 
+                // ===== DATA PRIBADI =====
                 name = form.nama.toTextBody(),
                 nik = form.nik.toTextBody(),
                 npwp = form.npwp.ifBlank { "-" }.toTextBody(),
@@ -123,6 +185,7 @@ class RegisterRepository(
                 activeAs = form.activeAs.toTextBody(),
                 motherName = form.motherName.ifBlank { "-" }.toTextBody(),
 
+                // ===== FILE UPLOAD =====
                 ktp_picture = filePart(
                     context,
                     form.ktpImageUri,
@@ -136,6 +199,7 @@ class RegisterRepository(
                 )
             )
 
+            // ================= ERROR HANDLING =================
             if (!res.isSuccessful) {
                 val rawError = res.errorBody()?.string()
 
@@ -162,6 +226,17 @@ class RegisterRepository(
     // =====================
     // ERROR PARSER
     // =====================
+    /**
+     * parseErrorMessage
+     *
+     * Mengubah error mentah dari backend menjadi
+     * pesan yang lebih mudah dipahami oleh pengguna.
+     *
+     * @param code HTTP status code
+     * @param rawBody Body error mentah dari backend
+     * @param defaultMessage Pesan default jika parsing gagal
+     * @return Pesan error yang siap ditampilkan ke UI
+     */
     private fun parseErrorMessage(
         code: Int,
         rawBody: String?,
@@ -174,7 +249,7 @@ class RegisterRepository(
             null
         }
 
-        // 🔥 CUSTOM UX MAPPING
+        // CUSTOM UX MAPPING
         return when {
             apiError?.error?.contains("nik", ignoreCase = true) == true ->
                 "NIK sudah terdaftar. Silakan gunakan NIK lain."

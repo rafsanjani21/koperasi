@@ -53,6 +53,10 @@ import android.widget.Toast
 
 data class Option(val label: String, val value: String)
 
+/**
+ * Model data utama untuk menampung seluruh input form
+ * yang akan dikirim ke backend saat proses registrasi.
+ */
 data class CompleteProfileForm(
     val ktpImageUri: Uri? = null,
     val profilePhotoUri: Uri? = null,
@@ -114,6 +118,16 @@ fun CompleteProfileScreen(
 
     fun isError(key: String) = errorFields.contains(key)
 
+    /**
+     * Melakukan validasi seluruh field wajib.
+     *
+     * - Menandai field error
+     * - Scroll otomatis ke field pertama yang error
+     * - Menampilkan Toast error
+     *
+     * @return true jika valid, false jika ada error
+     */
+
     fun validateAndScroll(): Boolean {
         errorFields.clear()
 
@@ -160,9 +174,6 @@ fun CompleteProfileScreen(
 
         return true
     }
-
-
-
 
     // ✅ pakai RegisterRepository yang terpisah filenya
     // bikin repo dengan tokenManager
@@ -291,6 +302,13 @@ fun CompleteProfileScreen(
     // ====== Launchers: KTP camera ======
     var ktpCaptureUri by remember { mutableStateOf<Uri?>(null) }
 
+    /**
+     * Launcher kamera untuk mengambil foto KTP.
+     * Setelah foto berhasil:
+     * - Menjalankan OCR
+     * - Mengambil NIK dari gambar
+     * - Mengisi field NIK otomatis
+     */
     val takeKtpPicture = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
@@ -330,7 +348,11 @@ fun CompleteProfileScreen(
         }
     }
 
-
+    /**
+     * Request permission kamera untuk foto KTP.
+     * Jika diizinkan → buka kamera
+     * Jika ditolak → tampilkan error
+     */
     val requestCameraForKtp = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
@@ -349,6 +371,10 @@ fun CompleteProfileScreen(
     // ====== Launchers: Profile photo camera only ======
     var profileCaptureUri by remember { mutableStateOf<Uri?>(null) }
 
+    /**
+     * Launcher kamera untuk mengambil foto profil user.
+     * Foto hanya disimpan jika capture berhasil.
+     */
     val takeProfilePicture = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
@@ -979,6 +1005,15 @@ fun CompleteProfileScreen(
         Spacer(Modifier.height(20.dp))
 
         // ===== BUTTON LANJUT =====
+        /**
+         * Tombol submit data.
+         *
+         * Proses:
+         * 1. Validasi form
+         * 2. Ambil Firebase ID Token
+         * 3. Kirim data & foto ke backend
+         * 4. Tampilkan dialog sukses
+         */
         Button(
             onClick = {
                 if (!validateAndScroll()) return@Button
@@ -1065,6 +1100,10 @@ fun CompleteProfileScreen(
     }
 }
 
+/**
+ * Dialog sukses setelah registrasi berhasil.
+ * User tidak bisa dismiss dengan klik luar.
+ */
 @Composable
 fun RegisterSuccessDialog(
     onDismiss: () -> Unit
@@ -1205,6 +1244,11 @@ private fun SimpleDropdownOption(
     Spacer(Modifier.height(10.dp))
 }
 
+/**
+ * Field tanggal dengan DatePicker.
+ * - Default tanggal: 1 Januari 2000
+ * - Format output: dd-MM-yyyy
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DatePickerField(

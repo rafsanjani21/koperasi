@@ -31,15 +31,29 @@ fun LoginScreen(
 ) {
 
     // 🔥 SINGLE SOURCE OF TRUTH
+    // Mengambil pesan error dari ViewModel
     val error by viewModel.errorMessage.collectAsState()
+
+    // State lokal untuk mengontrol visibilitas dialog
     var showDialog by remember { mutableStateOf(false) }
 
-    // 🔥 REAKSI SAAT ERROR BERUBAH
+    /**
+     * LaunchedEffect akan dijalankan setiap kali
+     * nilai errorMessage berubah.
+     *
+     * Jika error tidak null, dialog akan ditampilkan.
+     */
     LaunchedEffect(error) {
         showDialog = error != null
     }
 
-    // 🔥 PERMISSION LAUNCHER
+    /**
+     * Launcher untuk request izin lokasi.
+     *
+     * Flow:
+     * - Jika izin diberikan → lanjut login Google
+     * - Jika ditolak → set error ke ViewModel
+     */
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
@@ -92,6 +106,13 @@ fun LoginScreen(
 
                 Spacer(Modifier.height(24.dp))
 
+                /**
+                 * Tombol login menggunakan Google.
+                 *
+                 * Saat ditekan:
+                 * - Meminta izin ACCESS_FINE_LOCATION
+                 * - Jika izin disetujui → lanjut login Google
+                 */
                 Button(
                     onClick = {
                         permissionLauncher.launch(
@@ -116,6 +137,10 @@ fun LoginScreen(
 
                 Spacer(Modifier.height(16.dp))
 
+                /**
+                 * Text clickable untuk navigasi
+                 * ke halaman registrasi.
+                 */
                 Row(
                     modifier = Modifier.clickable { onNavigateRegister() },
                     verticalAlignment = Alignment.CenterVertically
@@ -134,6 +159,12 @@ fun LoginScreen(
         }
 
         // ================= ERROR DIALOG =================
+        /**
+         * Dialog error login.
+         *
+         * - Ditampilkan jika errorMessage tidak null
+         * - Error di-clear saat dialog ditutup
+         */
         if (showDialog && error != null) {
             AlertDialog(
                 onDismissRequest = {

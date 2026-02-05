@@ -46,12 +46,16 @@ fun RegisterScreen(
     onNavigateLogin: () -> Unit,
     onGoogleRegister: () -> Unit
 ) {
+    // State untuk menampilkan dialog Terms & Privacy
     var showTermsDialog by remember { mutableStateOf(false) }
+
+    // State untuk menampilkan error (jika ada)
     var error by remember { mutableStateOf("") }
 
 
     Box(modifier = Modifier.fillMaxSize()) {
 
+        // ================= BACKGROUND =================
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -65,7 +69,7 @@ fun RegisterScreen(
 
         ) {
 
-            //HEADER
+            // ================= HEADER =================
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -77,7 +81,7 @@ fun RegisterScreen(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                // Tombol back
+                // Tombol kembali ke halaman Login
                 IconButton(
                     onClick = { onNavigateLogin() },
                     modifier = Modifier
@@ -103,6 +107,7 @@ fun RegisterScreen(
             }
             Spacer(modifier = Modifier.weight(1f))
 
+            // ================= INFO MESSAGE =================
             val showInfo = remember(infoMessage) { infoMessage ?: "" }
 
             if (showInfo.isNotEmpty()) {
@@ -116,7 +121,7 @@ fun RegisterScreen(
                 Spacer(Modifier.height(12.dp))
             }
 
-
+            // ================= ERROR MESSAGE =================
             if (error.isNotEmpty()) {
                 Text(error, color = Color.Red)
                 Spacer(Modifier.height(8.dp))
@@ -125,11 +130,12 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            //KONTEN TENGAH
+            // ================= CONTENT =================
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth()
             ) {
+                // Logo aplikasi
                 Image(
                     painter = painterResource(id = R.drawable.splash),
                     contentDescription = "Logo",
@@ -138,6 +144,7 @@ fun RegisterScreen(
 
                 Spacer(Modifier.height(24.dp))
 
+                // Tombol Register dengan Google
                 Button(
                     onClick = { showTermsDialog = true },
                     modifier = Modifier
@@ -165,6 +172,7 @@ fun RegisterScreen(
 
                 Spacer(Modifier.height(16.dp))
 
+                // Navigasi ke halaman Login
                 Row(
                     modifier = Modifier.clickable { onNavigateLogin() },
                     horizontalArrangement = Arrangement.Center,
@@ -185,6 +193,7 @@ fun RegisterScreen(
             }
             Spacer(modifier = Modifier.weight(1f))
 
+            // ================= TERMS DIALOG =================
             if (showTermsDialog) {
                 TermsAndPrivacyDialog(
                     onDismiss = { showTermsDialog = false },
@@ -200,12 +209,27 @@ fun RegisterScreen(
     }
 }
 
+/**
+ * TermsAndPrivacyDialog
+ *
+ * Dialog yang menampilkan:
+ * - Terms of Service
+ * - Privacy Policy
+ * - Checkbox persetujuan pengguna
+ *
+ * Tombol "Lanjut" hanya aktif jika checkbox disetujui.
+ *
+ * @param onDismiss Callback saat dialog ditutup
+ * @param onAgree Callback saat user menyetujui dan melanjutkan
+ */
 @Composable
 fun TermsAndPrivacyDialog(
     onDismiss: () -> Unit,
     onAgree: () -> Unit
 ) {
+    // State checkbox persetujuan
     var checked by remember { mutableStateOf(false) }
+    // State scroll untuk konten panjang
     val scrollState = rememberScrollState()
 
     AlertDialog(
@@ -216,6 +240,7 @@ fun TermsAndPrivacyDialog(
                 fontWeight = FontWeight.Bold
             )
         },
+        // ================= CONTENT =================
         text = {
             Column(
                 modifier = Modifier
@@ -261,7 +286,6 @@ fun TermsAndPrivacyDialog(
                 Spacer(Modifier.height(16.dp))
 
                 /* ========== PRIVACY POLICY ========== */
-
                 Text(
                     "Provacy Notice",
                     fontWeight = FontWeight.Bold
@@ -348,7 +372,6 @@ fun TermsAndPrivacyDialog(
                 Spacer(Modifier.height(16.dp))
 
                 /* ========== CHECKBOX ========== */
-
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -364,6 +387,8 @@ fun TermsAndPrivacyDialog(
                 }
             }
         },
+
+        // ================= ACTION BUTTON =================
         confirmButton = {
             TextButton(
                 enabled = checked,
