@@ -7,6 +7,23 @@ import android.util.Log
 import androidx.core.content.edit
 import org.json.JSONObject
 
+/**
+ * TokenManager
+ *
+ * Kelas utilitas untuk mengelola token autentikasi pengguna,
+ * meliputi:
+ * - Access Token (JWT)
+ * - Token Hash (refresh / server-side token)
+ * - ID Token (Google / Firebase)
+ *
+ * Token disimpan secara lokal menggunakan SharedPreferences.
+ * Selain penyimpanan, kelas ini juga menangani:
+ * - Parsing expiry JWT
+ * - Pengecekan token hampir kedaluwarsa
+ * - Penghapusan token saat logout
+ *
+ * @param context Context Android untuk mengakses SharedPreferences
+ */
 class TokenManager(context: Context) {
 
     private val prefs: SharedPreferences =
@@ -22,12 +39,23 @@ class TokenManager(context: Context) {
     }
 
     // Simpan access + refresh token (dipanggil saat login)
+    /**
+     * saveTokens
+     *
+     * Menyimpan access token dan token hash ke local storage.
+     * Expiry access token diambil dari claim "exp" pada JWT.
+     *
+     * @param accessToken JWT access token dari backend
+     * @param tokenHash Token hash untuk kebutuhan logout / invalidasi
+     */
     fun saveTokens(accessToken: String, tokenHash: String?) {
+        // Validasi token hash
         if (tokenHash.isNullOrEmpty()) {
             Log.e("TOKEN", "token_hash null saat saveTokens")
             return
         }
 
+        // Ambil expiry token dari JWT
         val expSec = parseJwtExp(accessToken)
 
         prefs.edit {
@@ -40,20 +68,49 @@ class TokenManager(context: Context) {
     }
 
 
-
+    /**
+     * getAccessToken
+     *
+     * @return Access token JWT atau null jika belum login
+     */
     fun getAccessToken(): String? = prefs.getString(ACCESS_TOKEN, null)
 
+    /**
+     * getTokenHash
+     *
+     * @return Token hash atau null jika tidak tersedia
+     */
     fun getTokenHash(): String? =
         prefs.getString(TOKEN_HASH, null)
 
     // ✅ ID TOKEN (untuk register complete profile)
+    /**
+     * saveIdToken
+     *
+     * Menyimpan Google / Firebase ID Token.
+     * Digunakan pada proses registrasi lanjutan (complete profile).
+     *
+     * @param idToken Google / Firebase ID Token
+     */
     fun saveIdToken(idToken: String) {
         prefs.edit { putString(ID_TOKEN, idToken) }
     }
 
+    /**
+     * getIdToken
+     *
+     * @return Google / Firebase ID Token atau null
+     */
     fun getIdToken(): String? = prefs.getString(ID_TOKEN, null)
 
     // Ambil exp dalam detik (unix time), atau null kalau nggak ada
+    /**
+     * getAccessTokenExp
+     *
+     * Mengambil waktu kedaluwarsa access token (unix time dalam detik).
+     *
+     * @return Waktu exp token atau null jika tidak tersedia
+     */
     fun getAccessTokenExp(): Long? {
         val stored = prefs.getLong(ACCESS_TOKEN_EXP, 0L)
         return if (stored == 0L) null else stored
@@ -83,7 +140,14 @@ class TokenManager(context: Context) {
     }
 
 
-    // Parse claim "exp" dari JWT
+    /**
+     * parseJwtExp
+     *
+     * Mengekstrak claim "exp" dari JWT access token.
+     *
+     * @param token JWT access token
+     * @return Waktu exp dalam detik (unix time) atau null jika parsing gagal
+     */
     private fun parseJwtExp(token: String): Long? {
         return try {
             val parts = token.split(".")

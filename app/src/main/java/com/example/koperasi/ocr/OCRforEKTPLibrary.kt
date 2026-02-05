@@ -8,7 +8,6 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import com.example.koperasi.ocr.extractEktp
 import com.example.koperasi.model.Ktp
 
 class OCRforEKTPLibrary {
