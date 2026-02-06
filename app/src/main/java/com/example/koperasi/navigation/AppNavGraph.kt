@@ -1,6 +1,7 @@
 package com.example.koperasi.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -31,7 +32,10 @@ fun AppNavGraph(
 
         // ================= SPLASH =================
         composable("splash") {
-            SplashScreen(navController, isLoggedIn)
+            SplashScreen(
+                navController = navController,
+                isLoggedIn = isLoggedIn
+            )
         }
 
         // ================= LOGIN =================
@@ -39,9 +43,11 @@ fun AppNavGraph(
 
             val authViewModel: AuthViewModel = viewModel(
                 factory = AuthViewModelFactory(
-                    AuthRepository(ApiClient.api, tokenManager)
+                    repo = AuthRepository(ApiClient.api, tokenManager),
+                    tokenManager = tokenManager
                 )
             )
+
 
 
             LoginScreen(
@@ -113,9 +119,31 @@ fun AppNavGraph(
         // ================= HOME =================
         composable("home") {
 
-            MainBottomNavScreen(
-                onLogoutSuccess = onLogout
+            val authViewModel: AuthViewModel = viewModel(
+                factory = AuthViewModelFactory(
+                    repo = AuthRepository(ApiClient.api, tokenManager),
+                    tokenManager = tokenManager
+                )
             )
+
+
+
+            val token = tokenManager.getAccessToken()
+
+            // 🔥 NAVIGASI REAKTIF
+            LaunchedEffect(token) {
+                if (token == null) {
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            }
+
+            if (token != null) {
+                MainBottomNavScreen(
+                    onLogoutSuccess = { authViewModel.logout() }
+                )
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
 import androidx.core.content.ContextCompat
 import androidx.credentials.CredentialManager
 import androidx.lifecycle.lifecycleScope
@@ -20,6 +21,8 @@ import com.example.koperasi.navigation.AppNavGraph
 import com.example.koperasi.ui.theme.KoperasiTheme
 import com.example.koperasi.utils.LocationHelper
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.getValue
+
 
 /**
  * MainActivity adalah entry point utama aplikasi.
@@ -113,29 +116,30 @@ class MainActivity : ComponentActivity() {
 
         // Setup UI berbasis Jetpack Compose
         setContent {
-            // NavController utama aplikasi
             val navController = rememberNavController()
             nav = navController
 
-            // Cek status login dari token
-            val isLoggedIn = tokenManager.getAccessToken() != null
+            // 🔥 WAJIB: import androidx.compose.runtime.getValue
+            val isLoggedIn by tokenManager.isLoggedIn.collectAsState()
 
             KoperasiTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     AppNavGraph(
                         navController = navController,
                         startDestination = "splash",
-                        isLoggedIn = tokenManager.getAccessToken() != null,
+                        isLoggedIn = isLoggedIn,        // ✅ TAMBAHKAN INI
                         tokenManager = tokenManager,
                         authCoordinator = authCoordinator,
-                        lastKnownLocation = "JAKARTA",       // ✅ bisa dummy dulu
+                        lastKnownLocation = "JAKARTA",
                         onLogout = {
-                            authCoordinator.logout()
+                            tokenManager.clearTokens()
+                            navController.navigate("login") {
+                                popUpTo(0) { inclusive = true }
+                            }
                         }
                     )
                 }
             }
         }
-
     }
 }

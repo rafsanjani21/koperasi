@@ -14,19 +14,42 @@ data class LoginRequest(
 
 // =============== RESPONSES ===============
 
-data class LoginResponse(
+//data class LoginResponse(
+//    @SerializedName("access_token")
+//    val accessToken: String,
+//
+//    @SerializedName("token_hash")
+//    val tokenHash: String,
+//
+//    @SerializedName("message")
+//    val message: String,
+//
+//    @SerializedName("user")
+//    val user: UserData
+//)
+
+data class LoginData(
     @SerializedName("access_token")
     val accessToken: String,
 
     @SerializedName("token_hash")
     val tokenHash: String,
 
-    @SerializedName("message")
-    val message: String,
-
     @SerializedName("user")
     val user: UserData
 )
+
+data class LoginResponse(
+    @SerializedName("error")
+    val error: Boolean,
+
+    @SerializedName("message")
+    val message: String,
+
+    @SerializedName("data")
+    val data: LoginData?
+)
+
 
 data class RefreshResponse(
     @SerializedName("access_token")
@@ -40,31 +63,47 @@ data class RefreshResponse(
 )
 
 
+//data class UserData(
+//    @SerializedName("ID")
+//    val id: Int,
+//
+//    @SerializedName("GoogleUID")
+//    val googleUid: String,
+//
+//    @SerializedName("Name")
+//    val name: String,
+//
+//    @SerializedName("Email")
+//    val email: String,
+//
+//    @SerializedName("GooglePicture")
+//    val googlePicture: String?,
+//
+//    @SerializedName("ProfilePicture")
+//    val profilePicture: String?,
+//
+//    @SerializedName("Role")
+//    val role: String?,
+//
+//    @SerializedName("IsLoggedIn")
+//    val isLoggedIn: Int
+//)
+
 data class UserData(
-    @SerializedName("ID")
+    @SerializedName("id")
     val id: Int,
 
-    @SerializedName("GoogleUID")
-    val googleUid: String,
-
-    @SerializedName("Name")
+    @SerializedName("name")
     val name: String,
 
-    @SerializedName("Email")
+    @SerializedName("email")
     val email: String,
 
-    @SerializedName("GooglePicture")
-    val googlePicture: String?,
-
-    @SerializedName("ProfilePicture")
-    val profilePicture: String?,
-
-    @SerializedName("Role")
-    val role: String?,
-
-    @SerializedName("IsLoggedIn")
-    val isLoggedIn: Int
+    @SerializedName("role")
+    val role: String?
 )
+
+
 
 data class LogoutRequest(
     @SerializedName("token_hash")

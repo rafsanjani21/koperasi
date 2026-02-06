@@ -59,6 +59,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.compose.remote.creation.core)
+    implementation(libs.androidx.material3)
+    implementation("androidx.compose.material:material-icons-extended")
 
     // 🔹 Tambahin ini buat Preview
     debugImplementation(libs.androidx.compose.ui.tooling)

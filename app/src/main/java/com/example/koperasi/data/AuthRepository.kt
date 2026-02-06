@@ -1,5 +1,6 @@
 package com.example.koperasi.data
 
+import android.util.Log
 import com.example.koperasi.TokenManager
 import com.example.koperasi.data.remote.*
 import org.json.JSONObject
@@ -42,41 +43,30 @@ class AuthRepository(
      * @param location Lokasi pengguna
      * @throws Exception Jika login gagal
      */
-    suspend fun loginGoogle(
-        idToken: String,
-        location: String
-    ) {
+    suspend fun loginGoogle(idToken: String, location: String) {
         val res = api.loginGoogle(
-            LoginRequest(
-                idToken = idToken,
-                location = location
-            )
+            LoginRequest(idToken, location)
         )
 
-        // ================= ERROR HANDLING =================
         if (!res.isSuccessful) {
-            // Ambil body error dari response
             val errorBody = res.errorBody()?.string()
-
-            // Parsing pesan error dari JSON backend
-            val message = try {
-                JSONObject(errorBody ?: "{}")
-                    .optString("error", "Login gagal")
+            val msg = try {
+                JSONObject(errorBody ?: "{}").optString("message", "Login gagal")
             } catch (e: Exception) {
                 "Login gagal"
             }
-
-            // Lempar exception agar ditangani di layer atas (ViewModel/UI)
-            throw Exception(message)
+            throw Exception(msg)
         }
 
-        // ================= SUCCESS HANDLING =================
-        // Ambil body response jika sukses
-        val body = res.body()!!
+        val body = res.body() ?: throw Exception("Response kosong")
+        val data = body.data ?: throw Exception("Data login kosong")
 
-        // Simpan token ke local storage
-        tokenManager.saveTokens(body.accessToken, body.tokenHash)
+        tokenManager.saveTokens(
+            accessToken = data.accessToken,
+            tokenHash = data.tokenHash
+        )
     }
+
 
     /**
      * logout
@@ -93,10 +83,15 @@ class AuthRepository(
         val accessToken = tokenManager.getAccessToken() ?: return
         val tokenHash = tokenManager.getTokenHash() ?: return
 
+        Log.d("AUTH", "LOGOUT API HIT")
         // Kirim request logout ke backend
         api.logout(
             bearer = "Bearer $accessToken",
             body = LogoutRequest(tokenHash)
         )
+    }
+
+    fun clearSession() {
+        tokenManager.clearTokens()
     }
 }

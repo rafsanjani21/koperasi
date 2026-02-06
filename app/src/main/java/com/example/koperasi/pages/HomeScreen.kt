@@ -39,9 +39,10 @@ data class PromoItem(
 
 @Composable
 fun HomeScreen(
-    onLogoutSuccess: () -> Unit,
+    onLogout: () -> Unit,
     navController: NavController
-) {
+)
+ {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -96,7 +97,7 @@ fun HomeScreen(
 
             item {
                 OutlinedButton(
-                    onClick = onLogoutSuccess,
+                    onClick = onLogout,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
@@ -414,11 +415,11 @@ private fun PlaceholderCard(height: Dp) {
     )
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun HomePagePreview() {
-    HomeScreen(
-        onLogoutSuccess = { },
-        navController = rememberNavController(),
-    )
-}
+//@Preview(showBackground = true, showSystemUi = true)
+//@Composable
+//fun HomePagePreview() {
+//    HomeScreen(
+//        onLogoutSuccess = { },
+//        navController = rememberNavController(),
+//    )
+//}

@@ -2,6 +2,7 @@ package com.example.koperasi.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.koperasi.TokenManager
 import com.example.koperasi.data.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +22,8 @@ import kotlinx.coroutines.launch
  * @property repo Repository autentikasi (login / logout)
  */
 class AuthViewModel(
-    private val repo: AuthRepository   // ✅ WAJIB ADA
+    private val repo: AuthRepository,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     /* =========================================================
@@ -70,6 +72,19 @@ class AuthViewModel(
             }
         }
     }
+
+    fun logout() {
+        viewModelScope.launch {
+            try {
+                repo.logout() // 🔥 API LOGOUT
+            } catch (e: Exception) {
+                // optional: log error
+            } finally {
+                repo.clearSession() // 🔥 clear token
+            }
+        }
+    }
+
 
     /* =========================================================
      * ERROR HANDLING

@@ -85,8 +85,8 @@ fun MainBottomNavScreen(
 
             composable(BottomNavItem.Menu.route) {
                 HomeScreen(
-                    onLogoutSuccess = onLogoutSuccess,
-                    navController = navController
+                    onLogout = onLogoutSuccess,
+                    navController = rememberNavController()
                 )
             }
 

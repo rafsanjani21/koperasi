@@ -76,6 +76,7 @@ class AuthCoordinator(
                 credentialManager.clearCredentialState(
                     ClearCredentialStateRequest()
                 )
+                googleAuth.signOut()
 
                 // Konfigurasi Google ID Token
                 val option = GetGoogleIdOption.Builder()
@@ -122,9 +123,9 @@ class AuthCoordinator(
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 // Login / ambil user Firebase
-                val firebaseUser = googleAuth.currentUser()
-                    ?: googleAuth.signInWithToken(googleToken).user
-                    ?: return@launch
+                val firebaseUser =
+                    googleAuth.signInWithToken(googleToken).user
+                        ?: throw Exception("Firebase login gagal")
 
                 // Ambil Firebase ID Token (JWT)
                 val firebaseIdToken =
@@ -184,20 +185,16 @@ class AuthCoordinator(
      */
     fun logout() {
         CoroutineScope(Dispatchers.IO).launch {
-            try {
-                authRepository.logout()
-            } finally {
-                withContext(Dispatchers.Main) {
-                    credentialManager.clearCredentialState(
-                        ClearCredentialStateRequest()
-                    )
-                    googleAuth.signOut()
-                    tokenManager.clearTokens()
+            runCatching {
+                authRepository.logout() // backend best-effort
+            }
 
-                    getNavController()?.navigate("login") {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
+            withContext(Dispatchers.Main) {
+                credentialManager.clearCredentialState(ClearCredentialStateRequest())
+                googleAuth.signOut()
+                tokenManager.clearTokens()
+                // ❌ JANGAN navigate di sini
+                // biarkan AppNavGraph yang handle
             }
         }
     }

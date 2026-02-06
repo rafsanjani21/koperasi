@@ -113,10 +113,14 @@ class RegisterRepository(
         val body = loginRes.body()
             ?: throw IllegalStateException("Login gagal: response kosong")
 
+        val data = body.data
+            ?: throw IllegalStateException("Login gagal: data kosong")
+
         tokenManager.saveTokens(
-            body.accessToken,
-            body.tokenHash
+            accessToken = data.accessToken,
+            tokenHash = data.tokenHash
         )
+
     }
 
     // =====================
