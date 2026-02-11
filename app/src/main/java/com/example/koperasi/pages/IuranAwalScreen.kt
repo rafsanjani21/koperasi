@@ -58,8 +58,8 @@ fun IuranAwalScreen(
                 .background(
                     color = Color(0xFF4B67B0),
                     shape = RoundedCornerShape(
-                        bottomStart = 40.dp,
-                        bottomEnd = 40.dp
+                        bottomStart = 50.dp,
+                        bottomEnd = 50.dp
                     )
                 )
         )
