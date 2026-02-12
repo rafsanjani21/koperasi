@@ -24,7 +24,6 @@ fun AppNavGraph(
     lastKnownLocation: String,
     onLogout: () -> Unit
 ) {
-
     NavHost(
         navController = navController,
         startDestination = startDestination
@@ -48,8 +47,6 @@ fun AppNavGraph(
                 )
             )
 
-
-
             LoginScreen(
                 viewModel = authViewModel,
                 onNavigateRegister = {
@@ -59,7 +56,7 @@ fun AppNavGraph(
                     authCoordinator.startGoogleSignIn(
                         isRegisterFlow = false,
                         location = lastKnownLocation,
-                        onError = { msg: String ->   // ✅ FIX TYPE
+                        onError = { msg ->
                             authViewModel.setError(msg)
                         }
                     )
@@ -85,7 +82,7 @@ fun AppNavGraph(
                     authCoordinator.startGoogleSignIn(
                         isRegisterFlow = true,
                         location = lastKnownLocation,
-                        onError = { msg: String ->
+                        onError = { msg ->
                             navController.currentBackStackEntry
                                 ?.savedStateHandle
                                 ?.set("info", msg)
@@ -116,7 +113,7 @@ fun AppNavGraph(
             }
         }
 
-        // ================= HOME =================
+        // ================= HOME (ENTRY MAIN APP) =================
         composable("home") {
 
             val authViewModel: AuthViewModel = viewModel(
@@ -126,11 +123,9 @@ fun AppNavGraph(
                 )
             )
 
-
-
             val token = tokenManager.getAccessToken()
 
-            // 🔥 NAVIGASI REAKTIF
+            // redirect kalau token hilang
             LaunchedEffect(token) {
                 if (token == null) {
                     navController.navigate("login") {
@@ -141,9 +136,13 @@ fun AppNavGraph(
 
             if (token != null) {
                 MainBottomNavScreen(
-                    onLogoutSuccess = { authViewModel.logout() }
+                    onLogoutSuccess = {
+                        authViewModel.logout()
+                        onLogout()
+                    }
                 )
             }
         }
     }
 }
+

@@ -67,7 +67,7 @@ fun IuranAwalScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 30.dp)
         ) {
 
             Spacer(Modifier.height(16.dp))

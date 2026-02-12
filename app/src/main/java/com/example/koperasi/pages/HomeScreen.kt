@@ -40,7 +40,8 @@ data class PromoItem(
 @Composable
 fun HomeScreen(
     onLogout: () -> Unit,
-    navController: NavController
+    onOpenGeraiMart: () -> Unit,
+    onOpenGeraiDigital: () -> Unit
 )
  {
     Box(
@@ -55,7 +56,8 @@ fun HomeScreen(
         ) {
             item {
                 HomeHeader(
-                    navController = navController
+                    onOpenGeraiMart = onOpenGeraiMart,
+                    onOpenGeraiDigital = onOpenGeraiDigital
                 )
             }
 
@@ -131,7 +133,8 @@ fun HomeScreen(
 // ===== HEADER & LAIN2 =====
 @Composable
 private fun HomeHeader(
-    navController: NavController
+    onOpenGeraiMart: () -> Unit,
+    onOpenGeraiDigital: () -> Unit
 ) {
     val blue = Color(0xFF4461AD)
     val shape = RoundedCornerShape(
@@ -252,17 +255,17 @@ private fun HomeHeader(
                 ) {
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         AppShortcutItem("Gerai Mart", R.drawable.gerai_mart_logo) {
-                            navController.navigate("geraimart")
+                            onOpenGeraiMart()
                         }
                     }
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         AppShortcutItem("Gerai Agro", R.drawable.gerai_argo_logo) {
-                            navController.navigate("geraiagro")
+                            onOpenGeraiMart()
                         }
                     }
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         AppShortcutItem("Gerai Niaga", R.drawable.gerai_niaga_logo) {
-                            navController.navigate("gerainiaga")
+                            onOpenGeraiMart()
                         }
                     }
                 }
@@ -276,17 +279,17 @@ private fun HomeHeader(
                 ) {
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         AppShortcutItem("Gerai Digital", R.drawable.gerai_digital_logo) {
-                            navController.navigate("geraidigital")
+                            onOpenGeraiDigital()
                         }
                     }
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         AppShortcutItem("Spin Reward", R.drawable.spin_reward_logo) {
-                            navController.navigate("spinreward")
+                            onOpenGeraiMart()
                         }
                     }
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         AppShortcutItem("More", R.drawable.more_logo) {
-                            navController.navigate("more")
+                            onOpenGeraiMart()
                         }
                     }
                 }
