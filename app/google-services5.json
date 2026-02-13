@@ -59,64 +59,11 @@
           }
         },
         {
-          "client_id": "1085008448604-cvf346utu3fi6n2ne61186lbpslvlvlo.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.koperasi",
-            "certificate_hash": "55effe8200f6e55d2c5fe98897cefbc743e30cfe"
-          }
-        },
-        {
           "client_id": "1085008448604-lbe1qffq766bo03pjdjma1sv0ijpko4b.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.koperasi",
             "certificate_hash": "499413269b293dfe04afa8e89cd1ab027545872f"
-          }
-        },
-        {
-          "client_id": "1085008448604-0oucanl872c1lkrovvsptl9k9jts7hsd.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBY3OnufBz9a9-VIfdsJl2WZl5PNhvgmPs"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1085008448604-0oucanl872c1lkrovvsptl9k9jts7hsd.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:1085008448604:android:8c6b1ff87d02c07fedaa99",
-        "android_client_info": {
-          "package_name": "com.example.koperasiadmin"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "1085008448604-7ajgbkp7m2lqlcs5oj5257cbedk10k8p.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.koperasiadmin",
-            "certificate_hash": "da9a58c1edd87f9ea49aa24b8df06ccff4808d95"
-          }
-        },
-        {
-          "client_id": "1085008448604-tpc1utu6lv0qhkmjouljjfldg5dg9b5m.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.koperasiadmin",
-            "certificate_hash": "55effe8200f6e55d2c5fe98897cefbc743e30cfe"
           }
         },
         {

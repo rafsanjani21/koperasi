@@ -29,6 +29,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -232,35 +233,48 @@ fun TermsAndPrivacyDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = Color.White,
+        shape = RoundedCornerShape(8.dp),
         title = {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ){
             Text(
                 "Terms of Service & Privacy Policy",
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                fontSize = 18.sp,
+                color = Color(0xFF4461AD)
             )
+            }
         },
         // ================= CONTENT =================
         text = {
+            CompositionLocalProvider(
+                LocalContentColor provides Color.Black
+            ){
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(max = 360.dp) // ⬅️ BATAS TINGGI
-                    .verticalScroll(scrollState)
+                    .verticalScroll(scrollState),
             ) {
 
                 /* ========== TERMS OF SERVICE ========== */
 
                 Text(
                     "Term Of Service",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
                     "I. Komitmen & Akad Anggota",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 Spacer(Modifier.height(6.dp))
 
-                Text("• Kesediaan Iuran: Saya setuju membayar iuran sebesar Rp 30.000 per bulan.")
+                Text("• Kesediaan Iuran: Saya setuju membayar iuran sebesar Rp 30.000 per bulan.",)
                 Spacer(Modifier.height(4.dp))
                 Text("• Pernyataan Akad: Dana Rp 30.000 adalah Hibah/Sedekah/Donasi dan tidak dapat ditarik kembali.")
                 Spacer(Modifier.height(4.dp))
@@ -384,6 +398,7 @@ fun TermsAndPrivacyDialog(
                     )
                 }
             }
+            }
         },
 
         // ================= ACTION BUTTON =================
@@ -401,7 +416,8 @@ fun TermsAndPrivacyDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Batal")
+                Text("Batal",
+                    color = Color.Red)
             }
         }
     )
@@ -416,6 +432,21 @@ fun RegisterScreenPreview() {
         RegisterScreen(onNavigateLogin = {}, onGoogleRegister = {})
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun TermsAndPrivacyDialogCheckedPreview() {
+    KoperasiTheme {
+        var show by remember { mutableStateOf(true) }
+        if (show) {
+            TermsAndPrivacyDialog(
+                onDismiss = { show = false },
+                onAgree = { show = false }
+            )
+        }
+    }
+}
+
 
 
 

@@ -1076,6 +1076,7 @@ fun CompleteProfileScreen(
             onDismissRequest = {
                 showErrorDialog = false
             },
+            shape = RoundedCornerShape(8.dp),
             confirmButton = {
                 TextButton(
                     onClick = { showErrorDialog = false }
@@ -1109,25 +1110,39 @@ fun RegisterSuccessDialog(
 ) {
     AlertDialog(
         onDismissRequest = {}, // disable klik luar
+        containerColor = Color.White,
+        shape = RoundedCornerShape(8.dp),
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("OK")
+                Text(
+                    "OK",
+                    color = Color(0xFF4461AD)
+                )
             }
         },
-        icon = {
-            Icon(
-                painter = painterResource(R.drawable.verifikasi),
-                contentDescription = null,
-                tint = Color.Unspecified,
-                modifier = Modifier.size(64.dp)
-            )
-        },
+
         title = {
-            Text(
-                text = "Daftar Akun Berhasil",
-                fontWeight = FontWeight.Bold
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.verifikasi),
+                    contentDescription = null,
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(100.dp)
+                )
+
+                Spacer(modifier = Modifier.height(30.dp)) // ⬅️ SPACE ICON & TITLE
+
+                Text(
+                    text = "Daftar Akun Berhasil",
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            }
         },
+
         text = {
             Text(
                 text = "Mohon tunggu KTP diverifikasi oleh admin.\nTerima kasih!",
@@ -1135,9 +1150,9 @@ fun RegisterSuccessDialog(
                 modifier = Modifier.fillMaxWidth()
             )
         }
-
     )
 }
+
 
 
 
@@ -1285,7 +1300,9 @@ private fun DatePickerField(
                 Icon(Icons.Filled.DateRange, contentDescription = null)
             }
         },
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
+
     )
 
     if (open) {
