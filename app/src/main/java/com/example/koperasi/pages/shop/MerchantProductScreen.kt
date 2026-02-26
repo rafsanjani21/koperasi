@@ -1,4 +1,4 @@
-package com.example.koperasi.pages
+package com.example.koperasi.pages.shop
 
 
 import androidx.compose.animation.AnimatedVisibility

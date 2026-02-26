@@ -10,9 +10,15 @@ import com.example.koperasi.AuthCoordinator
 import com.example.koperasi.TokenManager
 import com.example.koperasi.data.AuthRepository
 import com.example.koperasi.data.remote.ApiClient
-import com.example.koperasi.pages.*
+import com.example.koperasi.pages.login.LoginScreen
+import com.example.koperasi.pages.login.PaymentScreen
+import com.example.koperasi.pages.main.SplashScreen
+import com.example.koperasi.pages.register.CompleteProfileScreen
+import com.example.koperasi.pages.register.RegisterScreen
 import com.example.koperasi.viewmodel.AuthViewModel
 import com.example.koperasi.viewmodel.AuthViewModelFactory
+import com.example.koperasi.viewmodel.PaymentViewModel
+import com.example.koperasi.viewmodel.PaymentViewModelFactory
 
 @Composable
 fun AppNavGraph(
@@ -21,7 +27,8 @@ fun AppNavGraph(
     isLoggedIn: Boolean,
     tokenManager: TokenManager,
     authCoordinator: AuthCoordinator,
-    lastKnownLocation: String,
+    userName: String,
+//    lastKnownLocation: String,
     onLogout: () -> Unit
 ) {
     NavHost(
@@ -55,7 +62,6 @@ fun AppNavGraph(
                 onLoginGoogle = {
                     authCoordinator.startGoogleSignIn(
                         isRegisterFlow = false,
-                        location = lastKnownLocation,
                         onError = { msg ->
                             authViewModel.setError(msg)
                         }
@@ -81,7 +87,6 @@ fun AppNavGraph(
                 onGoogleRegister = {
                     authCoordinator.startGoogleSignIn(
                         isRegisterFlow = true,
-                        location = lastKnownLocation,
                         onError = { msg ->
                             navController.currentBackStackEntry
                                 ?.savedStateHandle
@@ -136,12 +141,25 @@ fun AppNavGraph(
 
             if (token != null) {
                 MainBottomNavScreen(
+                    userName = userName,
                     onLogoutSuccess = {
                         authViewModel.logout()
                         onLogout()
                     }
                 )
             }
+        }
+
+        // ================= Payment Awal =================
+        composable("payment") {
+
+            val viewModel: PaymentViewModel = viewModel(
+                factory = PaymentViewModelFactory(ApiClient.paymentRepository)
+            )
+
+            PaymentScreen(
+                onBackClick = { navController.popBackStack() },
+            )
         }
     }
 }

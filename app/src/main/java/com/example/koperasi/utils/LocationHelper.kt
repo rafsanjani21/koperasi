@@ -9,14 +9,14 @@ import kotlin.coroutines.resume
 object LocationHelper {
 
     @SuppressLint("MissingPermission")
-    suspend fun getCurrentLocation(context: Context): String =
+    suspend fun getCurrentLocation(context: Context): String? =
         suspendCancellableCoroutine { cont ->
 
             val client = LocationServices.getFusedLocationProviderClient(context)
 
             val request = LocationRequest.Builder(
                 Priority.PRIORITY_HIGH_ACCURACY,
-                1000
+                1000L
             ).setMaxUpdates(1).build()
 
             val callback = object : LocationCallback() {
@@ -25,7 +25,7 @@ object LocationHelper {
                     if (loc != null) {
                         cont.resume("${loc.latitude},${loc.longitude}")
                     } else {
-                        cont.resume("UNKNOWN_LOCATION")
+                        cont.resume(null)
                     }
                     client.removeLocationUpdates(this)
                 }
@@ -36,5 +36,9 @@ object LocationHelper {
                 callback,
                 context.mainLooper
             )
+
+            cont.invokeOnCancellation {
+                client.removeLocationUpdates(callback)
+            }
         }
 }

@@ -19,6 +19,8 @@ class TokenManager(context: Context) {
         private const val TOKEN_HASH = "token_hash"
         private const val ACCESS_TOKEN_EXP = "access_token_exp"
         private const val ID_TOKEN = "id_token"
+
+        private const val USER_NAME = "user_name"
     }
 
     // 🔥 AUTH STATE (INI KUNCI UTAMA)
@@ -48,6 +50,12 @@ class TokenManager(context: Context) {
         prefs.edit { putString(ID_TOKEN, idToken) }
     }
 
+    fun saveUserName(name: String) {
+        prefs.edit {
+            putString(USER_NAME, name)
+        }
+    }
+
     // ================= GET =================
 
     fun getAccessToken(): String? =
@@ -63,6 +71,9 @@ class TokenManager(context: Context) {
         val stored = prefs.getLong(ACCESS_TOKEN_EXP, 0L)
         return if (stored == 0L) null else stored
     }
+
+    fun getUserName(): String? =
+        prefs.getString(USER_NAME, null)
 
     // ================= CLEAR =================
 

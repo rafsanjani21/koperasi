@@ -1,4 +1,4 @@
-package com.example.koperasi.pages
+package com.example.koperasi.pages.main
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -113,7 +114,7 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Tagline
-            androidx.compose.material3.Text(
+            Text(
                 text = "“Gerak Nyata untuk Ekonomi Rakyat”",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,

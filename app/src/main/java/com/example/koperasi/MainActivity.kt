@@ -1,17 +1,17 @@
 package com.example.koperasi
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
-import androidx.core.content.ContextCompat
+import androidx.compose.runtime.getValue
 import androidx.credentials.CredentialManager
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.koperasi.auth.GoogleAuthUiClient
@@ -19,92 +19,42 @@ import com.example.koperasi.data.AuthRepository
 import com.example.koperasi.data.remote.ApiClient
 import com.example.koperasi.navigation.AppNavGraph
 import com.example.koperasi.ui.theme.KoperasiTheme
-import com.example.koperasi.utils.LocationHelper
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.getValue
+import android.provider.Settings
+import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 
-
-/**
- * MainActivity adalah entry point utama aplikasi.
- *
- * Bertanggung jawab untuk:
- * - Inisialisasi authentication (Google Sign-In)
- * - Mengelola permission lokasi
- * - Menyediakan NavController global
- * - Menjalankan Navigation Graph berbasis Jetpack Compose
- */
 class MainActivity : ComponentActivity() {
 
-    /** Client untuk autentikasi Google (Credential API wrapper) */
     private lateinit var googleAuth: GoogleAuthUiClient
-
-    /** CredentialManager untuk mengelola login Google */
     private lateinit var credentialManager: CredentialManager
-
-    /** Koordinator logika autentikasi (login, logout, navigasi) */
     private lateinit var authCoordinator: AuthCoordinator
-
-    /** NavController disimpan agar bisa diakses dari luar Compose */
     private var nav: NavHostController? = null
-
-    /** Callback tertunda yang membutuhkan lokasi pengguna */
-    private var pendingAction: ((String) -> Unit)? = null
-
-    /** TokenManager untuk menyimpan dan mengambil JWT */
     private val tokenManager by lazy { TokenManager(this) }
     private val authRepository by lazy { AuthRepository(ApiClient.api, tokenManager) }
 
-    /** Lokasi terakhir pengguna (default jika permission ditolak) */
-    private var lastKnownLocation: String = "UNKNOWN_LOCATION"
+    private val requestLocationPermission =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
 
-    /**
-     * Launcher permission lokasi (runtime permission).
-     * Akan otomatis dipanggil saat user menerima / menolak permission.
-     */
-    private val locationPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            lifecycleScope.launch {
-                lastKnownLocation = if (granted)
-                    LocationHelper.getCurrentLocation(this@MainActivity)
-                else
-                    "UNKNOWN_LOCATION"
+            if (isGranted) {
+                // 🔥 Setelah permission diberikan → cek GPS
+                if (!isLocationEnabled()) {
+                    openLocationSettings()
+                }
             }
         }
 
-
-    /**
-     * Mengambil lokasi pengguna sebelum menjalankan aksi tertentu.
-     *
-     * @param action callback yang membutuhkan data lokasi
-     */
-    private fun getLocationThen(action: (String) -> Unit) {
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            lifecycleScope.launch {
-                lastKnownLocation =
-                    LocationHelper.getCurrentLocation(this@MainActivity)
-            }
-        } else {
-            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-    }
-
-    /**
-     * Lifecycle utama Activity.
-     * Seluruh dependency global dan Compose UI diinisialisasi di sini.
-     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Inisialisasi Google Auth Client
+        // 🔥 CEK GPS SAAT PERTAMA KALI
+        checkLocationPermission()
+
         googleAuth = GoogleAuthUiClient(this)
-        // Inisialisasi Credential Manager
         credentialManager = CredentialManager.create(this)
 
-        // Inisialisasi AuthCoordinator (pusat kontrol auth + navigasi)
         authCoordinator = AuthCoordinator(
             context = this,
             googleAuth = googleAuth,
@@ -114,23 +64,30 @@ class MainActivity : ComponentActivity() {
             getNavController = { nav }
         )
 
-        // Setup UI berbasis Jetpack Compose
         setContent {
             val navController = rememberNavController()
             nav = navController
 
-            // 🔥 WAJIB: import androidx.compose.runtime.getValue
             val isLoggedIn by tokenManager.isLoggedIn.collectAsState()
+
+            // 🔥 AMBIL NAMA DARI TOKEN MANAGER
+            val fullName = tokenManager.getUserName() ?: ""
+            Log.d("DEBUG_NAME", "FULL NAME = $fullName")
+            val firstName = fullName
+                .trim()
+                .split("\\s+".toRegex())
+                .firstOrNull()
+                ?: ""
 
             KoperasiTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     AppNavGraph(
                         navController = navController,
                         startDestination = "splash",
-                        isLoggedIn = isLoggedIn,        // ✅ TAMBAHKAN INI
+                        isLoggedIn = isLoggedIn,
                         tokenManager = tokenManager,
                         authCoordinator = authCoordinator,
-                        lastKnownLocation = "JAKARTA",
+                        userName = firstName,
                         onLogout = {
                             tokenManager.clearTokens()
                             navController.navigate("login") {
@@ -141,5 +98,39 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun checkLocationPermission() {
+        when {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED -> {
+
+                // Permission sudah ada → cek GPS
+                if (!isLocationEnabled()) {
+                    openLocationSettings()
+                }
+            }
+
+            else -> {
+                requestLocationPermission.launch(
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                )
+            }
+        }
+    }
+
+    private fun isLocationEnabled(): Boolean {
+        val locationManager =
+            getSystemService(LOCATION_SERVICE) as LocationManager
+
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+    }
+
+    private fun openLocationSettings() {
+        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+        startActivity(intent)
     }
 }

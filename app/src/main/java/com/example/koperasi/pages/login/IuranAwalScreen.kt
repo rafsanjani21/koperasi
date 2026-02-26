@@ -1,4 +1,4 @@
-package com.example.koperasi.pages
+package com.example.koperasi.pages.login
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

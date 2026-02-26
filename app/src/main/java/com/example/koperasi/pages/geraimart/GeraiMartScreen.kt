@@ -43,10 +43,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.koperasi.R
-import com.example.koperasi.pages.AppShortcutItem
-import com.example.koperasi.pages.MerchantData
-import com.example.koperasi.pages.ProductItem
-import com.example.koperasi.pages.ProductSection
+import com.example.koperasi.pages.main.AppShortcutItem
+import com.example.koperasi.pages.shop.MerchantData
+import com.example.koperasi.pages.shop.ProductItem
+import com.example.koperasi.pages.shop.ProductSection
 
 @Composable
 fun GeraiMartScreen(

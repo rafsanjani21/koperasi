@@ -4,9 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.example.koperasi.TokenManager
 import com.example.koperasi.data.remote.ApiService
-import com.example.koperasi.data.remote.LoginRequest
-import com.example.koperasi.pages.CompleteProfileForm
-import com.example.koperasi.utils.DeviceInfo
+import com.example.koperasi.pages.register.CompleteProfileForm
 import com.example.koperasi.utils.filePart
 import com.example.koperasi.data.mapper.*
 import com.example.koperasi.utils.toTextBody
@@ -73,55 +71,62 @@ class RegisterRepository(
      * @param form Data lengkap profil pengguna
      * @throws IllegalStateException Jika registrasi atau login gagal
      */
-    suspend fun registerThenLogin(
+    suspend fun registerOnly(
         idToken: String,
         form: CompleteProfileForm
     ) {
-        // ================= REGISTRASI =================
         registerMultipart(idToken, form)
-
-        // ================= DEVICE INFO =================
-        val device = DeviceInfo.getDeviceInfo()
-        val deviceInfo =
-            "Android ${device["os_version"]} (API ${device["api_level"]}); " +
-                    "Brand=${device["device_brand"]}; Model=${device["device_model"]}"
-
-        // ================= LOGIN =================
-        val loginRes = api.loginGoogle(
-            LoginRequest(idToken, deviceInfo)
-        )
-
-        if (!loginRes.isSuccessful) {
-            val errBody = loginRes.errorBody()?.string().orEmpty()
-
-            // 🔥 USER BELUM VERIFIED BUKAN ERROR FATAL
-            if (loginRes.code() == 400 && errBody.contains("not verified", true)) {
-                Log.w("LOGIN", "User belum diverifikasi, lanjut ke login screen")
-                return
-            }
-
-            val message = parseErrorMessage(
-                code = loginRes.code(),
-                rawBody = errBody,
-                defaultMessage = "Login gagal"
-            )
-
-            throw IllegalStateException(message)
-        }
-
-        // ================= SIMPAN TOKEN =================
-        val body = loginRes.body()
-            ?: throw IllegalStateException("Login gagal: response kosong")
-
-        val data = body.data
-            ?: throw IllegalStateException("Login gagal: data kosong")
-
-        tokenManager.saveTokens(
-            accessToken = data.accessToken,
-            tokenHash = data.tokenHash
-        )
-
     }
+
+//    suspend fun registerThenLogin(
+//        idToken: String,
+//        form: CompleteProfileForm
+//    ) {
+//        // ================= REGISTRASI =================
+//        registerMultipart(idToken, form)
+//
+//        // ================= DEVICE INFO =================
+//        val device = DeviceInfo.getDeviceInfo()
+//        val deviceInfo =
+//            "Android ${device["os_version"]} (API ${device["api_level"]}); " +
+//                    "Brand=${device["device_brand"]}; Model=${device["device_model"]}"
+//
+//        // ================= LOGIN =================
+//        val loginRes = api.loginGoogle(
+//            LoginRequest(idToken, deviceInfo)
+//        )
+//
+//        if (!loginRes.isSuccessful) {
+//            val errBody = loginRes.errorBody()?.string().orEmpty()
+//
+//            // 🔥 USER BELUM VERIFIED BUKAN ERROR FATAL
+//            if (loginRes.code() == 400 && errBody.contains("not verified", true)) {
+//                Log.w("LOGIN", "User belum diverifikasi, lanjut ke login screen")
+//                return
+//            }
+//
+//            val message = parseErrorMessage(
+//                code = loginRes.code(),
+//                rawBody = errBody,
+//                defaultMessage = "Login gagal"
+//            )
+//
+//            throw IllegalStateException(message)
+//        }
+//
+//        // ================= SIMPAN TOKEN =================
+//        val body = loginRes.body()
+//            ?: throw IllegalStateException("Login gagal: response kosong")
+//
+//        val data = body.data
+//            ?: throw IllegalStateException("Login gagal: data kosong")
+//
+//        tokenManager.saveTokens(
+//            accessToken = data.accessToken,
+//            tokenHash = data.tokenHash
+//        )
+//
+//    }
 
     // =====================
     // REGISTER MULTIPART
@@ -172,7 +177,14 @@ class RegisterRepository(
                 birth = ddMmYyyyToIso(form.tglLahir).toTextBody(),
                 gender = genderLabel(form.jenisKelamin).toTextBody(),
 
-                address = buildAlamat(form).toTextBody(),
+//                address = buildAlamat(form).toTextBody(),
+                province = form.provinsi.toTextBody(),
+                regency = form.kabupaten.toTextBody(),
+                district = form.kecamatan.toTextBody(),
+                village = form.kelurahan.toTextBody(),
+                rt = form.rt.toTextBody(),
+                rw = form.rw.toTextBody(),
+                address = form.alamat.toTextBody(),
                 posCode = form.kodePos.ifBlank { "0" }.toTextBody(),
 
                 religion = form.agama.toTextBody(),

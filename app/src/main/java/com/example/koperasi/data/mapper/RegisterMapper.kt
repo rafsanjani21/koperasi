@@ -1,6 +1,6 @@
 package com.example.koperasi.data.mapper
 
-import com.example.koperasi.pages.CompleteProfileForm
+import com.example.koperasi.pages.register.CompleteProfileForm
 
 // ===== GENDER =====
 fun genderLabel(value: String): String =

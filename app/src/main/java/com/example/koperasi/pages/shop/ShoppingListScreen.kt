@@ -1,4 +1,4 @@
-package com.example.koperasi.pages
+package com.example.koperasi.pages.shop
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.koperasi.R
 import com.example.koperasi.navigation.CartItem
 import com.example.koperasi.navigation.CartState
 
@@ -251,19 +252,19 @@ fun ShoppingListScreenPreview() {
             id = "kimo_kopi",
             name = "Kopi Kimo",
             price = "Rp. 23.000",
-            imageRes = com.example.koperasi.R.drawable.kopi
+            imageRes = R.drawable.kopi
         )
         addOrIncrement(
             id = "kimo_snack",
             name = "Snack Kimo",
             price = "Rp. 15.000",
-            imageRes = com.example.koperasi.R.drawable.kopi
+            imageRes = R.drawable.kopi
         )
         addOrIncrement(
             id = "kimo_kopi",
             name = "Kopi Kimo",
             price = "Rp. 23.000",
-            imageRes = com.example.koperasi.R.drawable.kopi
+            imageRes = R.drawable.kopi
         )
         updateNotes("kimo_kopi", "Less sugar")
     }

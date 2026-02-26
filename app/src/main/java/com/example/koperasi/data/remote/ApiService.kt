@@ -20,6 +20,14 @@ data class RefreshRequest(
     val tokenHash: String
 )
 
+data class QrResponse(
+    val qrBase64: String
+)
+
+data class UploadResponse(
+    val message: String
+)
+
 
 interface ApiService {
 
@@ -34,9 +42,8 @@ interface ApiService {
     @POST("/api/auth/user/register")
     suspend fun registerUserMultipart(
 
-        // 🔥 INI WAJIB SESUAI BACKEND
+        // SESUAI BACKEND
         @Part("id_token") idToken: RequestBody,
-
         @Part("name") name: RequestBody,
         @Part("nik") nik: RequestBody,
         @Part("npwp") npwp: RequestBody,
@@ -45,6 +52,13 @@ interface ApiService {
         @Part("birth") birth: RequestBody,
         @Part("gender") gender: RequestBody,
 
+//        @Part("address") address: RequestBody,
+        @Part("provinsi") province: RequestBody,
+        @Part("kabupaten") regency: RequestBody,
+        @Part("kecamatan") district: RequestBody,
+        @Part("kelurahan") village: RequestBody,
+        @Part("rt") rt: RequestBody,
+        @Part("rw") rw: RequestBody,
         @Part("address") address: RequestBody,
         @Part("pos_code") posCode: RequestBody,
 
@@ -82,4 +96,17 @@ interface ApiService {
         @Body body: RefreshRequest
     ): Response<RefreshResponse>
 
+}
+
+// ================= PAYMENT =================
+interface PaymentApi {
+
+    @GET("payment/qr")
+    suspend fun getQr(): Response<QrResponse>
+
+    @Multipart
+    @POST("payment/upload-bukti")
+    suspend fun uploadBukti(
+        @Part file: MultipartBody.Part
+    ): Response<UploadResponse>
 }

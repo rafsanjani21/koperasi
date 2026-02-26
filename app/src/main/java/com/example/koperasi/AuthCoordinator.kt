@@ -64,11 +64,10 @@ class AuthCoordinator(
      */
     fun startGoogleSignIn(
         isRegisterFlow: Boolean,
-        location: String,
         onError: (String) -> Unit
     ) {
         this.isRegisterFlow = isRegisterFlow
-        this.locationValue = location
+//        this.locationValue = location
 
         CoroutineScope(Dispatchers.Main).launch {
             try {
@@ -186,15 +185,13 @@ class AuthCoordinator(
     fun logout() {
         CoroutineScope(Dispatchers.IO).launch {
             runCatching {
-                authRepository.logout() // backend best-effort
+                authRepository.logout()
             }
 
             withContext(Dispatchers.Main) {
                 credentialManager.clearCredentialState(ClearCredentialStateRequest())
                 googleAuth.signOut()
                 tokenManager.clearTokens()
-                // ❌ JANGAN navigate di sini
-                // biarkan AppNavGraph yang handle
             }
         }
     }

@@ -1,4 +1,4 @@
-package com.example.koperasi.pages
+package com.example.koperasi.pages.main
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,6 +36,7 @@ data class PromoItem(
 
 @Composable
 fun HomeScreen(
+    userName: String,
     onLogout: () -> Unit,
     onOpenGeraiMart: () -> Unit,
     onOpenGeraiDigital: () -> Unit
@@ -53,6 +54,7 @@ fun HomeScreen(
         ) {
             item {
                 HomeHeader(
+                    userName = userName,
                     onOpenGeraiMart = onOpenGeraiMart,
                     onOpenGeraiDigital = onOpenGeraiDigital
                 )
@@ -130,6 +132,7 @@ fun HomeScreen(
 // ===== HEADER & LAIN2 =====
 @Composable
 private fun HomeHeader(
+    userName: String,
     onOpenGeraiMart: () -> Unit,
     onOpenGeraiDigital: () -> Unit
 ) {
@@ -165,7 +168,7 @@ private fun HomeHeader(
                     Spacer(Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = "Suparjo",
+                            text = userName,
                             color = Color.White,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold

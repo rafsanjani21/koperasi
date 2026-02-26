@@ -7,15 +7,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.example.koperasi.R
-import com.example.koperasi.pages.*
 import com.example.koperasi.pages.geraidigital.GeraiDigitalScreen
 import com.example.koperasi.pages.geraimart.GeraiMartScreen
+import com.example.koperasi.pages.main.HomeScreen
+import com.example.koperasi.pages.main.UserProfileScreen
+import com.example.koperasi.pages.shop.MerchantProductScreen
+import com.example.koperasi.pages.shop.PaymentMethodScreen
+import com.example.koperasi.pages.shop.ShoppingListScreen
 
 /* =========================
    BOTTOM NAV ITEM
@@ -36,7 +39,8 @@ sealed class BottomNavItem(
 ========================= */
 @Composable
 fun MainBottomNavScreen(
-    onLogoutSuccess: () -> Unit
+    onLogoutSuccess: () -> Unit,
+    userName: String
 ) {
     val navController = rememberNavController()
     val cartState = remember { CartState() }
@@ -77,6 +81,7 @@ fun MainBottomNavScreen(
             /* ===== BOTTOM NAV SCREENS ===== */
             composable(BottomNavItem.Menu.route) {
                 HomeScreen(
+                    userName = userName,
                     onLogout = onLogoutSuccess,
                     onOpenGeraiMart = {
                         navController.navigate("geraimart")

@@ -1,4 +1,4 @@
-package com.example.koperasi.pages
+package com.example.koperasi.pages.login
 
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -29,6 +30,9 @@ fun LoginScreen(
     onNavigateRegister: () -> Unit,
     onLoginGoogle: () -> Unit
 ) {
+
+    val isLoading by viewModel.isLoading.collectAsState()
+    val context = LocalContext.current
 
     // 🔥 SINGLE SOURCE OF TRUTH
     // Mengambil pesan error dari ViewModel
@@ -58,7 +62,7 @@ fun LoginScreen(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
-            onLoginGoogle()
+            onLoginGoogle() // 🔥 baru mulai Google Sign In
         } else {
             viewModel.setError("Izin lokasi diperlukan untuk login")
         }

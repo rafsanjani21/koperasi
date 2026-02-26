@@ -65,6 +65,8 @@ class AuthRepository(
             accessToken = data.accessToken,
             tokenHash = data.tokenHash
         )
+
+        tokenManager.saveUserName(data.user.name)
     }
 
 

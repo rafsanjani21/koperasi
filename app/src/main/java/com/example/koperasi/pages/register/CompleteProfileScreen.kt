@@ -1,8 +1,9 @@
-package com.example.koperasi.pages
+package com.example.koperasi.pages.register
 
 import android.Manifest
 import com.example.koperasi.R
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -47,7 +48,7 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import com.google.firebase.auth.FirebaseAuth
 import android.widget.Toast
-
+import com.example.koperasi.TokenManager
 
 
 data class Option(val label: String, val value: String)
@@ -146,6 +147,8 @@ fun CompleteProfileScreen(
             Triple("kabupaten", form.kabupaten.isBlank(), "Kabupaten wajib"),
             Triple("kecamatan", form.kecamatan.isBlank(), "Kecamatan wajib"),
             Triple("kelurahan", form.kelurahan.isBlank(), "Kelurahan wajib"),
+            Triple("rt", form.rt.isBlank(), "RT wajib"),
+            Triple("rw", form.rw.isBlank(), "RW wajib"),
             Triple("alamat", form.alamat.isBlank(), "Alamat wajib"),
             Triple("kodePos", form.kodePos.length != 5, "Kode pos harus 5 digit"),
             Triple("agama", form.agama.isBlank(), "Agama wajib"),
@@ -176,7 +179,7 @@ fun CompleteProfileScreen(
 
     // ✅ pakai RegisterRepository yang terpisah filenya
     // bikin repo dengan tokenManager
-    val tokenManager = remember { com.example.koperasi.TokenManager(ctx) }
+    val tokenManager = remember { TokenManager(ctx) }
     val registerRepo = remember { RegisterRepository(ApiClient.api, ctx, tokenManager) }
 
 
@@ -534,7 +537,7 @@ fun CompleteProfileScreen(
 
                 val fieldShape = RoundedCornerShape(8.dp)
                 // NIK
-                Text("NIK*", style = labelStyle)
+                Text("NIK*", style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(4.dp))
 
                 OutlinedTextField(
@@ -579,7 +582,7 @@ fun CompleteProfileScreen(
                 Spacer(Modifier.height(10.dp))
 
                 // Nama
-                Text("Nama*", style = labelStyle)
+                Text("Nama*", style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(4.dp))
 
                 OutlinedTextField(
@@ -591,18 +594,11 @@ fun CompleteProfileScreen(
                     isError = isError("nama"),
                     singleLine = true,
                     shape = fieldShape,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.LightGray,
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedLabelColor = Color.Transparent,
-                        unfocusedLabelColor = Color.Transparent
-                    )
                 )
                 Spacer(Modifier.height(10.dp))
 
                 // No HP wajib 0
-                Text("Nomor HP (wajib diawali 0)*", style = labelStyle)
-                Spacer(Modifier.height(4.dp))
+                Text("Nomor HP (wajib diawali 0)*", style = MaterialTheme.typography.labelLarge)
 
                 OutlinedTextField(
                     value = form.noHp,
@@ -622,7 +618,7 @@ fun CompleteProfileScreen(
 
                         form = form.copy(noHp = digits)
                     },
-                    label = { Text("No. HP") },
+                    label = { Text("Contoh: 081234567890") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .trackField("noHp"),
@@ -643,7 +639,7 @@ fun CompleteProfileScreen(
                 Spacer(Modifier.height(10.dp))
 
                 // NPWP opsional
-                Text("NPWP (Opsional)", style = labelStyle)
+                Text("NPWP (Opsional)", style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(4.dp))
 
                 OutlinedTextField(
@@ -654,19 +650,13 @@ fun CompleteProfileScreen(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = fieldShape,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.LightGray,
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedLabelColor = Color.Transparent,
-                        unfocusedLabelColor = Color.Transparent
-                    ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true
                 )
                 Spacer(Modifier.height(10.dp))
 
                 // Nama Ibu Kandung
-                Text("Nama Ibu Kandung*", style = labelStyle)
+                Text("Nama Ibu Kandung*", style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(4.dp))
 
                 OutlinedTextField(
@@ -675,18 +665,12 @@ fun CompleteProfileScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     shape = fieldShape,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.LightGray,
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedLabelColor = Color.Transparent,
-                        unfocusedLabelColor = Color.Transparent
-                    )
                 )
                 Spacer(Modifier.height(10.dp))
 
 
                 // Tempat lahir
-                Text("Tempat Lahir*", style = labelStyle)
+                Text("Tempat Lahir*", style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(4.dp))
 
                 PlaceOfBirthDropdown(
@@ -701,9 +685,10 @@ fun CompleteProfileScreen(
                         form = form.copy(tempatLahirKabKota = regencyName)
                     }
                 )
+                Spacer(Modifier.height(10.dp))
 
                 // Tanggal lahir
-                Text("Tanggal Lahir*", style = labelStyle)
+                Text("Tanggal Lahir*", style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(4.dp))
                 DatePickerField(
                     label = "Tanggal Lahir",
@@ -712,10 +697,10 @@ fun CompleteProfileScreen(
                     modifier = Modifier.trackField("tglLahir"),
                     onDateSelected = { form = form.copy(tglLahir = it) }
                 )
-
+                Spacer(Modifier.height(10.dp))
 
                 // Jenis kelamin
-                Text("Jenis Kelamin*", style = labelStyle)
+                Text("Jenis Kelamin*", style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(4.dp))
                 SimpleDropdownOption(
                     label = "Jenis Kelamin",
@@ -727,7 +712,6 @@ fun CompleteProfileScreen(
 
                 Spacer(Modifier.height(6.dp))
                 Text("Alamat (Wilayah)*", style = MaterialTheme.typography.labelLarge)
-                Spacer(Modifier.height(10.dp))
 
                 // Provinsi
                 SimpleDropdown(
@@ -817,6 +801,7 @@ fun CompleteProfileScreen(
                 Spacer(Modifier.height(4.dp))
 
                 OutlinedTextField(
+                    label = { Text("Contoh: Jl. Anggur No. 123") },
                     value = form.alamat,
                     onValueChange = { form = form.copy(alamat = it) },
                     singleLine = false,
@@ -843,7 +828,7 @@ fun CompleteProfileScreen(
                             }
                         }
                     },
-                    label = { Text("Kode Pos") },
+                    label = { Text("5 Digit") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .trackField("kodePos"),
@@ -864,9 +849,6 @@ fun CompleteProfileScreen(
                         }
                     }
                 )
-
-
-                Spacer(Modifier.height(10.dp))
 
                 // lain-lain
                 SimpleDropdown(
@@ -1037,7 +1019,13 @@ fun CompleteProfileScreen(
                         }
 
                         // REGISTER + LOGIN
-                        registerRepo.registerThenLogin(idToken, form)
+                        Log.d("DEBUG_FORM", """
+                        PROVINSI = ${form.provinsi}
+                        KABUPATEN = ${form.kabupaten}
+                        KECAMATAN = ${form.kecamatan}
+                        KELURAHAN = ${form.kelurahan}
+                        """.trimIndent())
+                        registerRepo.registerOnly(idToken, form)
 
                         // ✅ JANGAN navigate langsung
                         showSuccessDialog = true

@@ -1,4 +1,4 @@
-package com.example.koperasi.pages
+package com.example.koperasi.pages.main
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
